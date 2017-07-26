@@ -1,3 +1,5 @@
+"use strict";
+
 /** @constructor */
 function FKrista()
 {
@@ -88,7 +90,7 @@ FKrista.prototype.eatoctet = function(sym)
             else if (this.L === undefined) this.L = sym;
             else {
                 this.Addr = (this.H << 8) || this.L;
-                this.Count = (0377 & (sym - 1)) + 1;
+                this.Count = (0xff & (sym - 1)) + 1;
                 this.CountFixed = this.Count;
                 this.state = 7;
                 this.checksum = 0;
@@ -100,7 +102,7 @@ FKrista.prototype.eatoctet = function(sym)
         case 7:
             /* Data payload */
             this.mem[this.Addr++] = sym;
-            this.checksum = (this.checksum + sym) & 0377;
+            this.checksum = (this.checksum + sym) & 0xff;
             --this.Count;
             if (this.Count === 0) this.state = 8;
             break;

@@ -1,3 +1,5 @@
+"use strict";
+
 /** @constructor */
 function NameBlock(start, count, blocknum, cs0, nb)
 {
@@ -6,6 +8,7 @@ function NameBlock(start, count, blocknum, cs0, nb)
     this.Blocknum = blocknum || undefined;
     this.Checksum = cs0 || undefined;
     this.NameBytes = nb || new Uint8Array(25);
+    this.bm = new Blockmap();
 }
 
 NameBlock.prototype.Addr = function(sub)
@@ -34,7 +37,7 @@ FVector.prototype.reset = function()
     this.confidence = 0;
     this.state = 0;
     this.mem = [];
-    this.blockmap = undefined;
+    this.bm = new Blockmap();
     this.cs0 = 0;
     this.checksum = 0;
 
@@ -49,18 +52,6 @@ FVector.prototype.reset = function()
 FVector.prototype.Confidence = function()
 {
     return this.confidence;
-}
-
-FVector.prototype.region = function(blknum, start, end, type, error)
-{
-    var region = {
-        sblk_sym_start: start,
-        sblk_sym_end:   end,
-        type: type,
-        error: error,
-    };
-    this.blockmap[blknum][3].push(region);
-    return region;
 }
 
 FVector.prototype.eatoctet = function(sym, sym_start, sym_end)
@@ -141,7 +132,7 @@ FVector.prototype.eatoctet = function(sym, sym_start, sym_end)
             /* Block number */
             this.cs0 += this.tmpNameBlock.Blocknum = sym;
             this.blknum_sym_start = sym_start;
-            this.cs0 &= 0377;
+            this.cs0 &= 0xff;
             ++this.confidence;
             this.state = 6;
             break;
@@ -152,7 +143,9 @@ FVector.prototype.eatoctet = function(sym, sym_start, sym_end)
             if (this.cs0 === sym) {
                 this.confidence += 100;
                 this.NameBlock = this.tmpNameBlock;
-                this.initBlockMap();
+                this.bm.Init(null,
+                        this.NameBlock.Start * 8, 
+                        (this.NameBlock.Start + this.NameBlock.Count) * 8);
             } else {
                 this.confidence -= 100;
                 this.errormsg = "CS0 Expected=" + Util.hex8(this.cs0) + 
@@ -164,24 +157,24 @@ FVector.prototype.eatoctet = function(sym, sym_start, sym_end)
             {
                 var nb = this.tmpNameBlock;
                 let blknum = nb.Addr(0) >> 5;
-                this.initBlockMap(blknum);
+                this.bm.Init(blknum);
                 /* Push SYNC marking */
-                this.region(blknum, this.Sync_start, this.Sync_end, "sync");
+                this.bm.Region(blknum, this.Sync_start, this.Sync_end, "sync");
                 /* Push BLOCK marking */
-                this.BlockBlock = this.region(blknum, this.Sync_end, 0, "block");
+                this.BlockBlock = this.bm.Region(blknum, this.Sync_end, 0, "block");
                 /* Push main block marking */
-                this.region(blknum, this.Sblk_sym_start, this.Sblk_sym_end,
+                this.bm.Region(blknum, this.Sblk_sym_start, this.Sblk_sym_end,
                         "name", !(this.cs0 === sym));
                 /* Push name region */
-                this.region(blknum, this.name_sym_start, this.name_sym_end,
+                this.bm.Region(blknum, this.name_sym_start, this.name_sym_end,
                         "section-name", false);
-                this.region(blknum, this.start_sym_start, this.count_sym_start,
+                this.bm.Region(blknum, this.start_sym_start, this.count_sym_start,
                         "section-byte-alt", false);
-                this.region(blknum, this.count_sym_start, this.blknum_sym_start,
+                this.bm.Region(blknum, this.count_sym_start, this.blknum_sym_start,
                         "section-byte-alt", false);
-                this.region(blknum, this.blknum_sym_start, this.cs0_sym_start,
+                this.bm.Region(blknum, this.blknum_sym_start, this.cs0_sym_start,
                         "section-byte-alt", false);
-                this.region(blknum, this.cs0_sym_start, sym_end,
+                this.bm.Region(blknum, this.cs0_sym_start, sym_end,
                         "section-cs0", false);
             }
             break;
@@ -212,45 +205,35 @@ FVector.prototype.eatoctet = function(sym, sym_start, sym_end)
             this.Sblk_sym_end = sym_end;
 
             let blknum = this.SblkAddr >> 5;
-            let checksum_ok = (this.checksum & 0377) === sym;
+            let checksum_ok = (this.checksum & 0xff) === sym;
+            this.bm.Init(blknum);
             if (checksum_ok) {
                 this.state = 0;
                 this.confidence += 100;
-
-                this.initBlockMap(blknum);
                 /* Clear the subblock in the block map */
-                if (this.blockmap[blknum][0] < -1) {
-                    console.log("FIXED BLOCK @", 
-                            Util.hex16(this.SblkAddr));
-                }
-                this.blockmap[blknum][0] = 0;
+                this.bm.MarkLoaded(blknum);
             } else {
                 this.errormsg = "Payload checksum mismatch: @" +
                     Util.hex16(this.SblkAddr) + 
                     " sblk=" + Util.hex8(this.sblk) + 
-                    " calculated=" + Util.hex8(this.checksum & 0377) +
+                    " calculated=" + Util.hex8(this.checksum & 0xff) +
                     " read=" + Util.hex8(sym);
                 this.state = 0;
                 this.confidence -= 100;
-                if (this.blockmap && this.blockmap[blknum]) {
-                    this.blockmap[blknum][1] = this.checksum & 0377;
-                    this.blockmap[blknum][2] = sym & 0377;
-                    --this.blockmap[blknum][0];
-                }
+                this.bm.MarkFailure(blknum, this.checksum & 0xff, sym & 0xff);
             }
 
-            this.initBlockMap(blknum);
             /* Push SYNC marking */
-            this.region(blknum, this.Sync_start, this.Sync_end, "sync");
+            this.bm.Region(blknum, this.Sync_start, this.Sync_end, "sync");
 
             /* Push main block marking */
-            this.region(blknum, this.Sblk_sym_start, this.Sblk_sym_end, "payload",
+            this.bm.Region(blknum, this.Sblk_sym_start, this.Sblk_sym_end, "payload",
                 !checksum_ok).variant = this.sblk & 7;
             /* SBLK marking */
-            this.region(blknum, this.sblk_sym_start, this.cs0_sym_start, 
+            this.bm.Region(blknum, this.sblk_sym_start, this.cs0_sym_start, 
                     "section-byte-alt");
             /* CS0 marking */
-            this.region(blknum, this.cs0_sym_start, this.cs0_sym_end, "section-cs0");
+            this.bm.Region(blknum, this.cs0_sym_start, this.cs0_sym_end, "section-cs0");
             resync = true;
             break;
         case 100500:
@@ -264,12 +247,9 @@ FVector.prototype.countSuccess = function()
     if (!this.NameBlock) {
         return 0;
     }
-    var faltas = 0;
-    for (var i = this.NameBlock.Start * 8; 
-            i < (this.NameBlock.Start + this.NameBlock.Count) * 8; ++i) {
-        faltas += this.blockmap[i][0] ? 1 : 0;
-    }
-    return 1 - faltas / (this.NameBlock.Count * 8);
+   
+    var falta = this.bm.CountMissing();
+    return 1 - falta / (this.NameBlock.Count * 8);
 }
 
 FVector.prototype.dump = function(wav, cas)
@@ -296,121 +276,37 @@ FVector.prototype.dump = function(wav, cas)
     return (function(that) {
         return Util.dump(that.mem, "Вектор-06ц result: " + happiness,
             i0 + i1,
+            /* is_valid(addr) */
             function(addr) {
                 var blknum = addr >> 5;
-                return that.blockmap[blknum] && that.blockmap[blknum][0] === 0; 
+                return that.bm.IsLoaded(blknum);
             },
+            /* info_cb(addr) */
             function(addr) {
-                if ((addr & 037) != 0) return false;
+                if ((addr & 0x1f) != 0) return false;
                 var blknum = addr >> 5;
-                if (that.blockmap[blknum]) {
-                    return {
-                        blknum: blknum >> 3, 
-                        sblknum: blknum & 7,
-                        cs_calculated: that.blockmap[blknum][1],
-                        cs_read: that.blockmap[blknum][2]
-                    };
-                }
+                return that.bm.InfoObject(blknum);
             },
+            /* navigate to */
             function(e) {
                 var blknum = parseInt(e.target.getAttribute("blk")) << 3;
                 blknum += parseInt(e.target.getAttribute("sblk"));
-                var list = that.blockmap[blknum][3];
-                for (var i in list) {
-                    var b = list[i];
-                    if (b.type === "name" || b.type === "payload") {
-                        var iin = b.sblk_sym_start;
-                        var out = b.sblk_sym_end;
-                        wav.setNeedle(cas.IntervalToSample(iin));
-                    }
+                var list = that.bm.GetRegions(blknum, "payload");
+                if (!list.length) {
+                    list = that.bm.GetRegions(blknum, "name");
+                }
+                var b = list[0];
+                if (b) {
+                    var iin = b.sblk_sym_start;
+                    var out = b.sblk_sym_end;
+                    wav.setNeedle(cas.IntervalToSample(iin));
                 }
             }
             );
     })(this);
 };
 
-FVector.prototype.initBlockMap = function(single)
-{
-    if (!this.blockmap) {
-        this.blockmap = [];
-    }
-
-    if (single !== undefined && this.blockmap[single] === undefined) {
-        this.blockmap[single] = [-1, -1, -1, []];
-    } else {
-        var start = this.NameBlock.Start * 8;
-        var end = (this.NameBlock.Start + this.NameBlock.Count) * 8;
-        //console.log("Expecting blocks " + start + " through " + end);
-        for (var i = start; i <= end; ++i) {
-            /*  OK, checksum calc, checksum tape, {} */
-            if (this.blockmap[i] === undefined) {
-                this.blockmap[i] = [-1, -1, -1, []];
-            }
-        }
-    }
-}
-
 FVector.prototype.GetDecor = function(cas)
 {
-    var decor = [];
-    for (var i in this.blockmap) {
-        var marks = this.blockmap[i][3];
-        for (var j in marks) {
-            var m = marks[j];
-            var kolor = "#00f";
-            var height = 0.5;
-            switch (m.type) {
-                case "name":
-                    if (m.error) {
-                        kolor = "#f88";
-                    } else {
-                        kolor = "#099";
-                    }
-                    nest = 2;
-                    break;
-                case "section-name":
-                    kolor = "#119";
-                    nest = 4;
-                    break;
-                case "section-byte-alt":
-                    if (this.altbytecount === undefined) this.altbytecount = 0;
-                    kolor = (this.altbytecount & 1) ? "#536" : "#359";
-                    ++this.altbytecount;
-                    nest = 4;
-                    break;
-                case "section-cs0":
-                    kolor = "#b44";
-                    nest = 4;
-                    break;
-                case "payload":
-                    if (m.error) {
-                        kolor = "#b00";
-                    } else {
-                        var r = 3 + ((7 - m.variant) >> 2)
-                        var g = ((m.variant & 1) << 1);
-                        var b = 7 + (m.variant >> 2);
-                        kolor = "#" + r.toString(16) + g.toString(16) + b.toString(16);
-                    }
-                    nest = 2;
-                    break;
-                case "sync":
-                    kolor = "#b61";
-                    nest = 0;
-                    break;
-                case "block":
-                    kolor = "#753";
-                    nest = 0;
-                    break;
-            }
-            var region = 
-                {
-                    begin: cas.IntervalToSample(m.sblk_sym_start),
-                    end: cas.IntervalToSample(m.sblk_sym_end),
-                    color: kolor,
-                    nest: nest,
-                };
-            decor.push(region);
-        }
-    }
-    return decor;
+    return this.bm.GetDecor(cas);
 }
