@@ -469,16 +469,31 @@
     span.errorline {
         background: red;
     }
+    .dump-container {
+        line-height: 16px;
+    }
     .dt { padding-right:0.5em; display:inline;}          
-    .d0 { padding-right:0.5em; background-color: #111; display:inline;}          
-    .d1 { padding-right:0.5em; background-color: #222; display:inline;}  
-    .e0 { padding-right:0.5em; background-color: #700; display:inline;}          
-    .e1 { padding-right:0.5em; background-color: #800; display:inline;}  
+    .d0 { padding-right:0.5em; background-color: #111; display:block;
+        margin-top: 0px; margin-bottom: 0px;
+        height: 16px;
+    }
+    .d1 { padding-right:0.5em; background-color: #222; display:block;
+        margin-top: 0px; margin-bottom: 0px;
+        height: 16px;
+    }
+    .e0 { padding-right:0.5em; background-color: #700; display:inline;}
+    .e1 { padding-right:0.5em; background-color: #800; display:inline;}
     .bi { background-color: #a81; 
           display: inline; 
           margin-left: 1em;
           cursor: pointer;
     }
+    .dc { 
+        width: 16px; 
+        height: 16px;
+        vertical-align: middle;
+        margin-left: 1em;
+    } 
     </style>
 </head>
 
@@ -549,8 +564,8 @@
             read.onloadend = function(e) {
                 console.log("Got content: ",  file.type, " name: ", file.name,
                         " size: ", file.size);
-                console.log("Content length: ", read.result.length);
-                if (file.type === "audio/wav") {
+                console.log("Content length: ", read.result.byteLength);
+                if (file.type === "audio/wav" || file.type === "audio/x-wav") {
                     var wav = new Wav(file.name, new Uint8Array(read.result), 
                             defaultfilter);
                     if (wav) {

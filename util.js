@@ -55,6 +55,34 @@ Util.dumpspan = function(mem, org, mode) {
     return nonempty ? result : false;
 };
 
+Util.dumpcanvas = function(mem, org)
+{
+    var c = document.createElement("canvas");
+    c.width = 8;
+    c.height = 16;
+    c.setAttribute("class", "dc");
+    var ctx = c.getContext("2d");
+    ctx.translate(0.5, 0.5);
+
+    var dat = ctx.getImageData(0, 0, 8, 16);
+    var bmp = new Uint32Array(dat.data.buffer);
+    
+    for (var i = 0, ofs = 0; i < 16; ++i) {
+        var b = mem[org + i];
+        
+        bmp[ofs++] = (b & 0x80) ? 0xffffffff : 0;
+        bmp[ofs++] = (b & 0x40) ? 0xffffffff : 0;
+        bmp[ofs++] = (b & 0x20) ? 0xffffffff : 0;
+        bmp[ofs++] = (b & 0x10) ? 0xffffffff : 0;
+        bmp[ofs++] = (b & 0x08) ? 0xffffffff : 0;
+        bmp[ofs++] = (b & 0x04) ? 0xffffffff : 0;
+        bmp[ofs++] = (b & 0x02) ? 0xffffffff : 0;
+        bmp[ofs++] = (b & 0x01) ? 0xffffffff : 0;
+    }
+    ctx.putImageData(dat, 0, 0);
+    return c;
+}
+
 Util.dump = function(mem, title, pretitle, is_valid, info_cb, infoclick_cb) {
     var org = 0;
 
@@ -85,7 +113,7 @@ Util.dump = function(mem, title, pretitle, is_valid, info_cb, infoclick_cb) {
         var info;
         if (info_cb) info = info_cb(i);
 
-        var span = this.dumpspan(mem, i, 0);
+        var span = this.dumpspan(mem, i, 0);    /* mode 0: hex */
         var valid = true;
         var p1;
         if (span || !lastempty) {
@@ -103,9 +131,12 @@ Util.dump = function(mem, title, pretitle, is_valid, info_cb, infoclick_cb) {
             var text = Util.hex16(i) + ": ";
             text += span;
             text += '  ';
-            text += this.dumpspan(mem, i, 1);
+            text += this.dumpspan(mem, i, 1);   /* mode 1: characters */
             p1.innerHTML = text;
+            p1.appendChild(this.dumpcanvas(mem, i));
             result.push(p1);
+
+            //result.push(this.dumpcanvas(mem, i));
 
             if (!valid && info) {
                 if (info) {
@@ -118,7 +149,7 @@ Util.dump = function(mem, title, pretitle, is_valid, info_cb, infoclick_cb) {
                     result.push(binfo);
                 }
             }
-            result.push(document.createElement("br"));
+            //result.push(document.createElement("br"));
             lastempty = false;
         }
         if (!span && !lastempty) {
@@ -128,6 +159,7 @@ Util.dump = function(mem, title, pretitle, is_valid, info_cb, infoclick_cb) {
     }
 
     var div = document.createElement("div");
+    div.setAttribute("class", "dump-container");
     for (var i = 0; i < result.length; ++i) {
         div.appendChild(result[i]);
     }
