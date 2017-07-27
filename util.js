@@ -118,7 +118,7 @@ Util.dump = function(mem, title, pretitle, is_valid, info_cb, infoclick_cb) {
         var p1;
         if (span || !lastempty) {
             if (is_valid) valid = is_valid(i);
-            var cls = !is_valid ? 'd' : is_valid(i) ? 'd' : 'e';
+            var cls = !is_valid ? 'd' : valid ? 'd' : 'e';
             p1 = document.createElement("pre");
             p1.setAttribute("class", cls + (printline++%2));
             if (info) {
@@ -146,7 +146,8 @@ Util.dump = function(mem, title, pretitle, is_valid, info_cb, infoclick_cb) {
                     text += " Read: " + Util.hex8(info.cs_read);
                     text += " Eval: " + Util.hex8(info.cs_calculated);
                     binfo.innerHTML = text;
-                    result.push(binfo);
+                    p1.appendChild(binfo);
+                    //result.push(binfo);
                 }
             }
             //result.push(document.createElement("br"));

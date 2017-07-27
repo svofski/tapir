@@ -471,28 +471,39 @@
     }
     .dump-container {
         line-height: 16px;
+        display: inline-block;
     }
-    .dt { padding-right:0.5em; display:inline;}          
+    .dt { padding-right:0.5em; display:inline;} 
     .d0 { padding-right:0.5em; background-color: #111; display:block;
         margin-top: 0px; margin-bottom: 0px;
         height: 16px;
+        cursor: pointer;
     }
     .d1 { padding-right:0.5em; background-color: #222; display:block;
         margin-top: 0px; margin-bottom: 0px;
         height: 16px;
+        cursor: pointer;
     }
-    .e0 { padding-right:0.5em; background-color: #700; display:inline;}
-    .e1 { padding-right:0.5em; background-color: #800; display:inline;}
+    .e0 { padding-right:0.5em; background-color: #700; display:block;
+        margin-top: 0px; margin-bottom: 0px;
+        height: 16px;
+        cursor: pointer;
+    }
+    .e1 { padding-right:0.5em; background-color: #800; display:block;
+        margin-top: 0px; margin-bottom: 0px;
+        height: 16px;
+        cursor: pointer;
+    }
     .bi { background-color: #a81; 
           display: inline; 
           margin-left: 1em;
-          cursor: pointer;
     }
     .dc { 
         width: 16px; 
         height: 16px;
         vertical-align: middle;
         margin-left: 1em;
+        image-rendering: pixelated;
     } 
     </style>
 </head>
@@ -521,7 +532,7 @@
                 <input id="fir2" type="radio" name="fir" value="firb" />FIR B<br />
             </fieldset>
             <fieldset class="inline-ffs">
-                <legend>Dilate</legend>
+                <legend>Skew</legend>
                 <input id="dilate0" type="radio" name="dil" checked="checked"/>None<br/>
                 <input id="dilate2" type="radio" name="dil"/>Long 2x<br/>
             </fieldset>

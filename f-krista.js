@@ -53,12 +53,16 @@ FKrista.prototype.eatoctet = function(sym, sym_start, sym_end)
             this.startaddr = sym;
             this.checksum += sym;
             this.state = 3;
+            this.x.start_start = sym_start;
+            this.x.start_end = sym_end;
             break;
         case 3:
             /* Expect end address */
             this.endaddr = sym;
             this.checksum += sym;
             this.state = 4;
+            this.x.end_start = sym_start;
+            this.x.end_end = sym_end;
             break;
         case 4:
             /* Expect header checksum */
@@ -66,12 +70,20 @@ FKrista.prototype.eatoctet = function(sym, sym_start, sym_end)
                 this.confidence += 100;
                 resync = true;
                 this.state = 5; /* local resync to e6 */
-                this.bm.Init(null, this.startaddr, this.endaddr - this.startaddr - 1);
+                this.bm.Init(null, this.startaddr, this.endaddr - this.startaddr);
                 this.x.header_end = sym_end;
 
                 var bnum = this.startaddr;
-                this.bm.Region(bnum, this.x.sync_start, this.x.sync_end, "sync");
-                this.bm.Region(bnum, this.x.header_start, this.x.header_end, "name");
+                this.bm.Region(bnum, this.x.sync_start, this.x.sync_end, "sync")
+                    .text = "SYNC";
+                this.bm.Region(bnum, this.x.header_start, this.x.header_end, "name")
+                    .text = "FF";
+                this.bm.Region(bnum, this.x.start_start, this.x.start_end, 
+                        "section-byte-alt").text = "O:" + Util.hex8(this.startaddr);
+                this.bm.Region(bnum, this.x.end_start, this.x.end_end,
+                        "section-byte-alt").text = "E:" + Util.hex8(this.endaddr);
+                this.bm.Region(bnum, sym_start, sym_end, "section-cs0")
+                    .text = "=" + Util.hex8(sym);
             } else {
                 this.errormsg = "Checksum error: calculated=" + 
                     Util.hex8(this.checksum) + 
@@ -96,21 +108,33 @@ FKrista.prototype.eatoctet = function(sym, sym_start, sym_end)
                 this.x.block_start = sym_start;
                 this.x.header_start = sym_start;
                 this.H = sym;
-            } else if (this.L === undefined) this.L = sym;
-            else {
+                this.x.h_start = sym_start;
+                this.x.h_end = sym_end;
+            } else if (this.L === undefined) {
+                this.L = sym;
+                this.x.l_start = sym_start;
+                this.x.l_end = sym_end;
+            } else {
                 this.Addr = (this.H << 8) || this.L;
                 this.Count = (0xff & (sym - 1)) + 1;
+                this.CountSym = sym;
                 this.CountFixed = this.Count;
                 this.state = 7;
                 this.checksum = 0;
                 this.x.header_end = sym_end;
-                this.x.payload_start = sym_end + 1;
+                
+                this.x.count_start = sym_start;
+                this.x.count_end = sym_end;
+                this.x.payload_start = -1;
                 //console.log("Loading KRISTA-2 Block to: " + Util.hex8(this.H) +
                 //        Util.hex8(this.L) + " Count=" + this.Count);
             }
             break;
         case 7:
             /* Data payload */
+            if (this.x.payload_start === -1) {
+                this.x.payload_start = sym_start;
+            }
             this.mem[this.Addr++] = sym;
             this.checksum = (this.checksum + sym) & 0xff;
             --this.Count;
@@ -151,12 +175,22 @@ FKrista.prototype.eatoctet = function(sym, sym_start, sym_end)
                 }
             }
 
-            this.bm.Region(this.H, this.x.sync_start, this.x.sync_end, "sync");
+            this.bm.Region(this.H, this.x.sync_start, this.x.sync_end, "sync")
+                .text = "SYNC";
             this.bm.Region(this.H, this.x.block_start, this.x.block_end, "block");
-            this.bm.Region(this.H, this.x.header_start, this.x.header_end, "name");
+            //this.bm.Region(this.H, this.x.header_start, this.x.header_end, "name");
+            this.bm.Region(this.H, this.x.h_start, this.x.h_end, "section-byte-alt")
+                .text = Util.hex8(this.H);
+            this.bm.Region(this.H, this.x.l_start, this.x.l_end, "section-byte-alt")
+                .text = Util.hex8(this.L);
+            this.bm.Region(this.H, this.x.count_start, this.x.count_end, 
+                    "section-byte-alt").text = Util.hex8(this.CountSym);
             this.bm.Region(this.H, this.x.payload_start, this.x.payload_end, "payload",
-                    this.checksum !== sym);
-            this.bm.Region(this.H, this.x.cs_start, this.x.cs_end, "section-cs0");
+                    this.checksum !== sym)
+                .text = "DATA @" + Util.hex16((this.H << 8) + this.L) +
+                    " [" + this.CountFixed.toString(16) + "]";
+            this.bm.Region(this.H, this.x.cs_start, this.x.cs_end, "section-cs0")
+                .text = "=" + Util.hex8(sym);
 
             break;
         case 100500:
@@ -168,7 +202,7 @@ FKrista.prototype.eatoctet = function(sym, sym_start, sym_end)
     return resync;
 }
 
-FKrista.prototype.dump = function()
+FKrista.prototype.dump = function(wav, cas)
 {
     var happiness = (this.state === 100500 ? "HAPPY" : "SAD");
     var i0 = "<pre class='d0'>Krista-2 decoder result: " +
@@ -198,8 +232,28 @@ FKrista.prototype.dump = function()
         i2 = "<pre class='d0'>Blocks that were not loaded:</pre><br/>" + i2;
     }
 
-    return Util.dump(this.mem, "Krista-2 result: " + happiness,
-            i0 + i1 + i2);
+    return (function(that) {
+        return Util.dump(that.mem, "Krista-2 result: " + happiness,
+            i0 + i1 + i2,
+            function(addr) {
+                return that.bm.IsLoaded(addr >> 8);
+            },
+            function(addr) {
+                return that.bm.InfoObject(addr >> 8);
+            },
+            /* navigate to */
+            function(e) {
+                var blknum = parseInt(e.target.getAttribute("blk"));
+                console.log("blknum=", blknum);
+                var list = that.bm.GetRegions(blknum, "payload");
+                var b = list[0];
+                if (b) {
+                    var iin = b.sblk_sym_start;
+                    var out = b.sblk_sym_end;
+                    wav.setNeedle(cas.IntervalToSample(iin));
+                }
+            });
+    })(this);
 };
 
 FKrista.prototype.GetDecor = function(cas)

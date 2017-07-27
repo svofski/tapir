@@ -40,7 +40,7 @@ Blockmap.prototype.Init = function(single, start, count)
     if (single !== undefined && single !== null && this.blockmap[single] === undefined){
         this.blockmap[single] = [-1, -1, -1, []];
     } else if (start !== undefined && count !== undefined) {
-        for (var i = start; i <= start + count; ++i) {
+        for (var i = start; i < start + count; ++i) {
             /*  OK, checksum calc, checksum tape, {} */
             if (this.blockmap[i] === undefined) {
                 this.blockmap[i] = [-1, -1, -1, []];
@@ -159,6 +159,7 @@ Blockmap.prototype.GetDecor = function(cas)
                     begin: cas.IntervalToSample(m.sblk_sym_start),
                     end: cas.IntervalToSample(m.sblk_sym_end),
                     color: kolor,
+                    text: m.text,
                     nest: nest,
                 };
             decor.push(region);

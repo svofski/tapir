@@ -145,7 +145,7 @@ FVector.prototype.eatoctet = function(sym, sym_start, sym_end)
                 this.NameBlock = this.tmpNameBlock;
                 this.bm.Init(null,
                         this.NameBlock.Start * 8, 
-                        (this.NameBlock.Start + this.NameBlock.Count) * 8);
+                        (this.NameBlock.Start + this.NameBlock.Count - 1) * 8);
             } else {
                 this.confidence -= 100;
                 this.errormsg = "CS0 Expected=" + Util.hex8(this.cs0) + 
@@ -159,23 +159,29 @@ FVector.prototype.eatoctet = function(sym, sym_start, sym_end)
                 let blknum = nb.Addr(0) >> 5;
                 this.bm.Init(blknum);
                 /* Push SYNC marking */
-                this.bm.Region(blknum, this.Sync_start, this.Sync_end, "sync");
+                this.bm.Region(blknum, this.Sync_start, this.Sync_end, "sync")
+                    .text = "SYNC";
                 /* Push BLOCK marking */
                 this.BlockBlock = this.bm.Region(blknum, this.Sync_end, 0, "block");
                 /* Push main block marking */
                 this.bm.Region(blknum, this.Sblk_sym_start, this.Sblk_sym_end,
-                        "name", !(this.cs0 === sym));
+                        "name", !(this.cs0 === sym))
+                    .text = ".00: NAME";
                 /* Push name region */
                 this.bm.Region(blknum, this.name_sym_start, this.name_sym_end,
-                        "section-name", false);
+                        "section-name", false)
+                    .text = nb.NameStr();
                 this.bm.Region(blknum, this.start_sym_start, this.count_sym_start,
-                        "section-byte-alt", false);
+                        "section-byte-alt", false)
+                    .text = "O:" + Util.hex8(nb.Start);
                 this.bm.Region(blknum, this.count_sym_start, this.blknum_sym_start,
-                        "section-byte-alt", false);
+                        "section-byte-alt", false)
+                    .text = "C:" + Util.hex8(nb.Count);
                 this.bm.Region(blknum, this.blknum_sym_start, this.cs0_sym_start,
-                        "section-byte-alt", false);
+                        "section-byte-alt", false)
+                    .text = "#" + Util.hex8(nb.Blocknum);
                 this.bm.Region(blknum, this.cs0_sym_start, sym_end,
-                        "section-cs0", false);
+                        "section-cs0", false).text = "=" + Util.hex8(sym);
             }
             break;
         case 9:
@@ -224,16 +230,28 @@ FVector.prototype.eatoctet = function(sym, sym_start, sym_end)
             }
 
             /* Push SYNC marking */
-            this.bm.Region(blknum, this.Sync_start, this.Sync_end, "sync");
-
+            this.bm.Region(blknum, this.Sync_start, this.Sync_end, "sync")
+                .text = "SYNC";
             /* Push main block marking */
-            this.bm.Region(blknum, this.Sblk_sym_start, this.Sblk_sym_end, "payload",
-                !checksum_ok).variant = this.sblk & 7;
+            {
+                var pl = this.bm.Region(blknum, this.Sblk_sym_start, 
+                        this.Sblk_sym_end, "payload", !checksum_ok);
+                pl.variant = this.sblk & 7;
+            } 
             /* SBLK marking */
             this.bm.Region(blknum, this.sblk_sym_start, this.cs0_sym_start, 
-                    "section-byte-alt");
+                    "section-byte-alt")
+                .text = "." + Util.hex8(this.sblk);
             /* CS0 marking */
-            this.bm.Region(blknum, this.cs0_sym_start, this.cs0_sym_end, "section-cs0");
+            this.bm.Region(blknum, this.cs0_sym_start, this.cs0_sym_end, "section-cs0")
+                .text = "=" + Util.hex8(this.cs0);
+            /* For payload text */
+            this.bm.Region(blknum, this.cs0_sym_end, this.cs0_sym_end, "text")
+                .text = "DATA @" + Util.hex16(this.SblkAddr);
+    
+            /* Checksum */
+            this.bm.Region(blknum, sym_start, sym_end, "section-cs0")
+                .text = "+:" + Util.hex8(sym);
             resync = true;
             break;
         case 100500:
@@ -283,7 +301,7 @@ FVector.prototype.dump = function(wav, cas)
             },
             /* info_cb(addr) */
             function(addr) {
-                if ((addr & 0x1f) != 0) return false;
+                if ((addr & 0x0f) != 0) return false;
                 var blknum = addr >> 5;
                 return that.bm.InfoObject(blknum);
             },

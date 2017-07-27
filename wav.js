@@ -134,6 +134,7 @@ Wav.prototype.paintZoom = function()
     var mid_y = this.zcanvas.height / 2;
     var half_scale = mid_y/2;
 
+    c.globalAlpha = 1.0;
     c.strokeStyle = "#fff";
     c.fillStyle = "#000"; //"#142";
     c.fillRect(0, 0, this.zcanvas.width, this.zcanvas.height);
@@ -152,9 +153,16 @@ Wav.prototype.paintZoom = function()
             c.fillRect(xleft * this.zoom, 0, 
                     (right - left) * this.zoom, 
                     this.zcanvas.height * h);
+
+            if (decor[i].text) {
+                c.font = "10px monospace";
+                c.fillStyle = "#fff";
+                c.fillText(decor[i].text, xleft * this.zoom, 10);
+            }
         }
     }
 
+    c.globalAlpha = 0.4;
     c.beginPath();
 
     for (var i = 0, step = this.zoom; i < this.zcanvas.width; i += step) {
