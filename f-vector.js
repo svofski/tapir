@@ -191,11 +191,14 @@ FVector.prototype.eatoctet = function(sym, sym_start, sym_end)
             this.confidence += 100 * (cs0_tape === this.cs0);
             this.state = 10;
             this.dummycount = 0;
+            this.blockbuf = new Uint8Array(32);
             this.cs0_sym_start = sym_start;
             this.cs0_sym_end = sym_end;
             break;
         case 10:
-            this.mem[this.SblkAddr + this.dummycount] = sym;
+            //this.mem[this.SblkAddr + this.dummycount] = sym;
+            /* Load into temporary buffer */
+            this.blockbuf[this.dummycount] = sym;
             this.checksum += sym;
             ++this.dummycount;
             if (this.dummycount == 32) {
@@ -218,6 +221,10 @@ FVector.prototype.eatoctet = function(sym, sym_start, sym_end)
                 this.confidence += 100;
                 /* Clear the subblock in the block map */
                 this.bm.MarkLoaded(blknum);
+                /* Copy into the main memory */
+                for (var i = 0; i < 32; ++i) {
+                    this.mem[this.SblkAddr + i] = this.blockbuf[i];
+                }
             } else {
                 this.errormsg = "Payload checksum mismatch: @" +
                     Util.hex16(this.SblkAddr) + 
@@ -226,7 +233,14 @@ FVector.prototype.eatoctet = function(sym, sym_start, sym_end)
                     " read=" + Util.hex8(sym);
                 this.state = 0;
                 this.confidence -= 100;
-                this.bm.MarkFailure(blknum, this.checksum & 0xff, sym & 0xff);
+                /* Only mark as fail if wasn't loaded before */
+                if (!this.bm.IsLoaded(blknum)) {
+                    this.bm.MarkFailure(blknum, this.checksum & 0xff, sym & 0xff);
+                    /* Since there's nothing better, copy what we've got */
+                    for (var i = 0; i < 32; ++i) {
+                        this.mem[this.SblkAddr + i] = this.blockbuf[i];
+                    }
+                }
             }
 
             /* Push SYNC marking */

@@ -100,6 +100,7 @@ Cas.prototype.analHistogram2 = function()
                 max_i = i;
             }
         }
+        var small_valley = max/100 * 30;
 
         /* Descend off its shoulders until a valley on each side */
         var i1 = max_i, i2 = max_i;
@@ -107,8 +108,14 @@ Cas.prototype.analHistogram2 = function()
             if (i1 > 0 && h[i1 - 1] < h[i1]) {
                 --i1;
                 ++moved;
+            } else if (i1 > 0 && h[i1 - 1] >= small_valley && h[i1 - 1] - small_valley < h[i1]) {
+                --i1;
+                ++moved;
             }
             if (i2 < h.length && h[i2 + 1] < h[i2]) {
+                ++i2;
+                ++moved;
+            } else if (i2 < h.length && h[i2 + 1] >= small_valley && h[i2 + 1] - small_valley < h[i2]) {
                 ++i2;
                 ++moved;
             }

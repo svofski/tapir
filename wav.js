@@ -1,5 +1,5 @@
 /** @constructor */
-const ZOOM_MIN = 0.1;
+const ZOOM_MIN = 0.02;
 const ZOOM_MAX = 4;
 const ZOOM_EPS = 0.005;
 
@@ -47,7 +47,7 @@ Wav.prototype.attachEvents = function()
 
         /* Wheel/scroll zoom same in both overview and detail canvases */
         var wheelzoom = function(e) {
-            var delta = e.wheelDelta ? e.wheelDelta/100 : e.detail ? -e.detail : 0;
+            var delta = e.wheelDelta ? e.wheelDelta/200 : e.detail ? -e.detail : 0;
             //console.log("wheel delta=", delta, e.deltaX, e.deltaY);
             var z = that.zoom + delta;
 
@@ -136,7 +136,7 @@ Wav.prototype.paintZoom = function()
 
     c.globalAlpha = 1.0;
     c.strokeStyle = "#fff";
-    c.fillStyle = "#000"; //"#142";
+    c.fillStyle = "#000";
     c.fillRect(0, 0, this.zcanvas.width, this.zcanvas.height);
 
     if (this.decor) {
