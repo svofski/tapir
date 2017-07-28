@@ -593,7 +593,8 @@
                         bpskanalyser.dilate = defaultdilate;
 
                         var formats = [new FRaw(), new FKrista(), new FVector(),
-                            new FRk()];
+                            NewFRk86(), NewFMicrosha(), NewFSpec()];
+                            //new FRk()];
 
                         var formats_done = formats.length;
                         var most_confident = {confidence:0, fmt: formats[0]};
