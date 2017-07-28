@@ -78,6 +78,8 @@ Cas.prototype.scanIntervals = function()
         }
     }
 
+    intervals.push([100, previous_playhead]);
+
     this.intervals = intervals;
     //console.log(intervals);
     this.histogram = histogram;

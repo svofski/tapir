@@ -553,6 +553,7 @@
     <script language="JavaScript" src="./f-raw.js" type="text/javascript"><!--x--></script>
     <script language="JavaScript" src="./f-krista.js" type="text/javascript"><!--x--></script>
     <script language="JavaScript" src="./f-vector.js" type="text/javascript"><!--x--></script>
+    <script language="JavaScript" src="./f-rk.js" type="text/javascript"><!--x--></script>
     <script language="JavaScript">
         const FORMAT_GAVE_UP = "la cucaracha ya no quiere caminar";
 
@@ -591,7 +592,8 @@
                         var bpskanalyser = new Cas(wavwerk);
                         bpskanalyser.dilate = defaultdilate;
 
-                        var formats = [new FRaw(), new FKrista(), new FVector()];
+                        var formats = [new FRaw(), new FKrista(), new FVector(),
+                            new FRk()];
 
                         var formats_done = formats.length;
                         var most_confident = {confidence:0, fmt: formats[0]};
