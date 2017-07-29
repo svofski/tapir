@@ -241,10 +241,11 @@ Cas.prototype.paintHistogram = function(h, max, peaks)
 
 Cas.prototype.IntervalToSample = function(i) 
 {
-    try {
-    return this.intervals[i][1];
-    } catch (e) {
-        console.log("IntervalToSample: i=", i, e);
+    //return this.intervals[i][1];//-this.Long;// + this.Short;
+    if (this.getInterval(i)[0] == "L") {
+        return this.intervals[i][1] + this.Short;
+    } else {
+        return this.intervals[i][1];
     }
 }
 

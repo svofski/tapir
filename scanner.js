@@ -29,13 +29,14 @@ Scanner.prototype.scan = function()
 
     var insync = false;
 
-    var sym_start = 0;
+    //var sym_start = 0;
 
     var history = [0,0,0,0,0,0,0,0];
-    var history_head = 0;
+    var history_head = 0, history_tail = 0;
 
     for (var i = 0, end = interval_count - 1, abort = false; i < end && !abort;) {
         history[history_head] = i;
+        history_tail = history_head;
         if (++history_head === 8) history_head = 0;
 
         var ipair = this.cas.getInterval(i);
@@ -74,8 +75,7 @@ Scanner.prototype.scan = function()
             if (syncbyte === 0xe6) {
                 //console.log("SYNC NOINV");
                 sym = 0xe6;
-                //sym_start = i - 9;
-                sym_start = history[history_head];
+                //sym_start = history[history_head];
                 bitcount = 7;
                 insync = true;
             } 
@@ -93,7 +93,9 @@ Scanner.prototype.scan = function()
 
             /* use the format sniffers */
             if (insync) {
-                insync = !this.format.eatoctet(sym, sym_start, i); 
+                var s_start = history[history_head];
+                var s_end = history[history_tail];
+                insync = !this.format.eatoctet(sym, s_start, s_end);
                 if (this.format.errormsg) {
                     console.log("ERROR: ", this.format.FormatName, 
                             this.format.errormsg);
@@ -112,7 +114,7 @@ Scanner.prototype.scan = function()
 
             bitcount = 0;
             sym = 0;
-            sym_start = i;
+            //sym_start = i;
         }
     }
     //this.rawbytes = bytes.slice(0, bytecount);

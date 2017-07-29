@@ -54,7 +54,10 @@ Wav.prototype.attachEvents = function()
             if (z < ZOOM_MIN) z = ZOOM_MIN;
             if (z > ZOOM_MAX) z = ZOOM_MAX;
             if (Math.abs(z - that.zoom) > ZOOM_EPS) {
-                that.setZoom(z);
+                var oldzoom = that.zoom;
+                that.setZoom(z, e.offsetX / oldzoom - e.offsetX / z);
+                //that.setZoom(z);
+                //that.setNeedle(that.needle + e.offsetX / oldzoom - e.offsetX / z);
             }
             return e.preventDefault() && false;
         };
@@ -83,7 +86,7 @@ Wav.prototype.attachEvents = function()
     })(this);
 }
 
-Wav.prototype.setZoom = function(zoom)
+Wav.prototype.setZoom = function(zoom, centrediff)
 {
     this.zoom = zoom;
 
@@ -91,16 +94,18 @@ Wav.prototype.setZoom = function(zoom)
 
     this.wcanvas.width = window_width;
     this.wcanvas.style.width = this.wcanvas.width + "px";
+    this.setNeedle(this.needle + centrediff, true);
     this.paintZoom();
 }
 
-Wav.prototype.setNeedle = function(position) 
+Wav.prototype.setNeedle = function(position, norepaint) 
 {
     this.needle = position;
 
     this.wcanvas.style.left = (position - this.wcanvas.width/2)/this.xscale + "px";
- 
-    this.paintZoom();
+    if (!norepaint) { 
+        this.paintZoom();
+    }
 }
 
 Wav.prototype.Decorate = function(decor)
