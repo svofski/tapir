@@ -25,48 +25,49 @@ Scanner.prototype.scan = function()
     var syncbyte = 0;
 
     var interval_count = this.cas.IntervalCount();
-    //var bytes = new Uint8Array(interval_count / 8);
-
     var insync = false;
-
-    //var sym_start = 0;
-
-    var history = [0,0,0,0,0,0,0,0];
+    var history = [0,0,0,0,0,0,0,0,0];
     var history_head = 0, history_tail = 0;
 
     for (var i = 0, end = interval_count - 1, abort = false; i < end && !abort;) {
-        history[history_head] = i;
-        history_tail = history_head;
-        if (++history_head === 8) history_head = 0;
-
         var ipair = this.cas.getInterval(i);
         switch (ipair) {
             case "SS":
                 /* no inversion, advance 2 */
                 outbit = bitstate;
+                history[history_head] = i;
                 i += 2;
                 break;
             case "SL":
                 /* inversion, advance 1 */
                 outbit = bitstate;
+                history[history_head] = i;
                 i += 1;
                 break;
             case "LL":
                 /* no inversion, advance 1 */
                 bitstate ^= 1;
                 outbit = bitstate;
+                history[history_head] = i;
                 i += 1;
                 break;
             case "LS":
                 /* inversion advance 2 */
                 bitstate ^= 1;
                 outbit = bitstate;
+                history[history_head] = i;
                 i += 2;
                 break;
             default:
                 abort = true;
                 break;
         }
+        history_head = history_head + 1 === history.length ? 0 : history_head + 1;
+        history[history_head] = i;
+        history_tail = history_head + 1 === history.length ? 0 : history_head + 1;
+        var s_end = history[history_head];
+        var s_start = history[history_tail];
+
         sym = (sym << 1) | outbit;
 
         syncbyte = 0377 & ((syncbyte << 1) | outbit);
@@ -75,7 +76,6 @@ Scanner.prototype.scan = function()
             if (syncbyte === 0xe6) {
                 //console.log("SYNC NOINV");
                 sym = 0xe6;
-                //sym_start = history[history_head];
                 bitcount = 7;
                 insync = true;
             } 
@@ -93,8 +93,8 @@ Scanner.prototype.scan = function()
 
             /* use the format sniffers */
             if (insync) {
-                var s_start = history[history_head];
-                var s_end = history[history_tail];
+                //var s_start = history[history_head];
+                //var s_end = history[history_tail];
                 insync = !this.format.eatoctet(sym, s_start, s_end);
                 if (this.format.errormsg) {
                     console.log("ERROR: ", this.format.FormatName, 
@@ -114,7 +114,6 @@ Scanner.prototype.scan = function()
 
             bitcount = 0;
             sym = 0;
-            //sym_start = i;
         }
     }
     //this.rawbytes = bytes.slice(0, bytecount);

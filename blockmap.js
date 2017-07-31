@@ -134,6 +134,10 @@ Blockmap.prototype.GetDecor = function(cas)
                     kolor = "#b44";
                     nest = 4;
                     break;
+                case "section-cs1":
+                    kolor = "#b33";
+                    nest = 4;
+                    break;
                 case "payload":
                     if (m.error) {
                         kolor = "#b00";
@@ -150,7 +154,8 @@ Blockmap.prototype.GetDecor = function(cas)
                     nest = 0;
                     break;
                 case "block":
-                    kolor = "#753";
+                    //kolor = "#753";
+                    kolor = "#573";
                     nest = 0;
                     break;
             }

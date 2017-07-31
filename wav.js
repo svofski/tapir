@@ -18,7 +18,9 @@ Wav.prototype.attachEvents = function()
     (function(that) {
         var set_mouse = function(e) {
                 if (e.buttons === 1) {
-                    that.setNeedle((e.offsetX - that.wcanvas.width/2) * that.xscale);
+                    var rect = e.target.getBoundingClientRect();
+                    var x = e.pageX - rect.left;
+                    that.setNeedle((x - that.wcanvas.width/2) * that.xscale);
                 }
             };
         that.ocanvas.onmousemove = set_mouse;
@@ -56,8 +58,6 @@ Wav.prototype.attachEvents = function()
             if (Math.abs(z - that.zoom) > ZOOM_EPS) {
                 var oldzoom = that.zoom;
                 that.setZoom(z, e.offsetX / oldzoom - e.offsetX / z);
-                //that.setZoom(z);
-                //that.setNeedle(that.needle + e.offsetX / oldzoom - e.offsetX / z);
             }
             return e.preventDefault() && false;
         };
@@ -89,10 +89,9 @@ Wav.prototype.attachEvents = function()
 Wav.prototype.setZoom = function(zoom, centrediff)
 {
     this.zoom = zoom;
+    //console.log("zoom=", this.zoom);
 
-    window_width = Math.round(this.zcanvas.width / this.xscale / this.zoom);
-
-    this.wcanvas.width = window_width;
+    this.wcanvas.width = Math.round(this.zcanvas.width / this.xscale / this.zoom);
     this.wcanvas.style.width = this.wcanvas.width + "px";
     this.setNeedle(this.needle + centrediff, true);
     this.paintZoom();
@@ -101,8 +100,7 @@ Wav.prototype.setZoom = function(zoom, centrediff)
 Wav.prototype.setNeedle = function(position, norepaint) 
 {
     this.needle = position;
-
-    this.wcanvas.style.left = (position - this.wcanvas.width/2)/this.xscale + "px";
+    this.wcanvas.style.left = position/this.xscale + "px";
     if (!norepaint) { 
         this.paintZoom();
     }
@@ -160,7 +158,7 @@ Wav.prototype.paintZoom = function()
                     this.zcanvas.height * h);
 
             if (decor[i].text) {
-                c.font = "10px monospace";
+                c.font = "11px monospace";
                 c.fillStyle = "#fff";
                 c.fillText(decor[i].text, xleft * this.zoom, 10);
             }
@@ -172,7 +170,7 @@ Wav.prototype.paintZoom = function()
 
     for (var i = 0, step = this.zoom; i < this.zcanvas.width; i += step) {
         var samp = this.Data[n++];
-        var y = samp * this.yscale * half_scale + mid_y;
+        var y = mid_y - samp * this.yscale * half_scale;
         if (i === 0) {
             c.moveTo(i, y);
         } else {
@@ -279,7 +277,7 @@ Wav.prototype.buildPeaks = function()
     }
 
     this.yscale = 1 / max;
-    this.xscale = 1 / ratio;
+    this.xscale = this.Data.length / width;
 
     this.wcanvas.width = window_width;
     this.wcanvas.style.width = this.wcanvas.width + "px";

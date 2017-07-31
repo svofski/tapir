@@ -100,6 +100,9 @@ FRk.prototype.reset = function()
     this.confidence = 0;
     this.state = 0;
     this.s = false;
+    this.x = {};
+    this.bm = new Blockmap();
+    this.bm.Init(0);
 }
 
 FRk.prototype.Confidence = function()
@@ -122,10 +125,21 @@ FRk.prototype.eatoctet = function(sym, sym_start, sym_end)
                 this.dummycount = 0;
                 this.buf = new Uint8Array(32);
                 this.state = 1;
+
+                this.bm.Region(0, sym_start, sym_end, "sync")
+                    .text = "SYNC";
             }
             break;
         case 1: /* start addr octet 0 */
             this.buf[this.dummycount] = sym;
+
+            switch (this.dummycount) {
+                case 0: this.x.o1 = sym_start; break;
+                case 1: this.x.o2 = sym_start; break;
+                case 2: this.x.o3 = sym_start; break;
+                case 3: this.x.o4 = sym_start; this.x.o5 = sym_end; break;
+                        break;
+            }
             ++this.dummycount;
             if (this.dummycount === 4) {
                 /* RK: start16, end16 big endian */
@@ -153,10 +167,12 @@ FRk.prototype.eatoctet = function(sym, sym_start, sym_end)
             }
             break; 
         case 2.5:
+            this.x.cs_start = sym_start;
             this.csm_hibuf = sym;
             this.state = 2.75;
             break;
         case 2.75:
+            this.x.cs_end = sym_end;
             this.csm_lobuf = sym;
             if (this.rk.Check(this.csm_hibuf, this.csm_lobuf)) {
                 this.confidence += 400;
@@ -170,11 +186,15 @@ FRk.prototype.eatoctet = function(sym, sym_start, sym_end)
                 this.confidence += 100; 
                 this.cs_hibuf = this.cs_lobuf = 0;
                 this.state = 4;
+
+                this.x.sync2_start = sym_start;
+                this.x.sync2_end = sym_end;
             }
             break;
         case 4:
             this.cs_hibuf = sym;
             this.state = 5;
+            this.x.cs_start = sym_start;
             break;
         case 5:
             this.cs_lobuf = sym;
@@ -186,11 +206,31 @@ FRk.prototype.eatoctet = function(sym, sym_start, sym_end)
                 this.errormsg = "checksum mismatch";
                 this.state = 100;
             }
+
+            this.bm.Region(0, this.x.o1, sym_end, "block");
+            this.bm.Region(0, this.x.o1, this.x.o5, "name");
+            this.bm.Region(0, this.x.o1, this.x.o2, "section-byte-alt")
+                .text = Util.hex8(this.buf[0]);
+            this.bm.Region(0, this.x.o2, this.x.o3, "section-byte-alt")
+                .text = Util.hex8(this.buf[1]);
+            this.bm.Region(0, this.x.o3, this.x.o4, "section-byte-alt")
+                .text = Util.hex8(this.buf[2]);
+            this.bm.Region(0, this.x.o4, this.x.o5, "section-byte-alt")
+                .text = Util.hex8(this.buf[3]);
+            this.bm.Region(0, this.x.o5, this.x.sync2_start, "payload")
+                .text = "DATA @" + Util.hex16(this.rk.start) + 
+                " [" + this.rk.buf.length + "]";
+            this.bm.Region(0, this.x.sync2_start, this.x.sync2_end, "sync")
+                .text = "SYNC";
+            this.bm.Region(0, this.x.cs_start, sym_start, "section-cs0")
+                .text = "=" + Util.hex8(this.cs_hibuf);
+            this.bm.Region(0, sym_start, sym_end, "section-cs1")
+                .text = Util.hex8(this.cs_lobuf) + "=";
             break;
         case 100:
             break;
         case 100500:
-            break;
+           break;
     }
 }
 
@@ -211,7 +251,7 @@ FRk.prototype.dump = function(wav, cas)
 
 FRk.prototype.GetDecor = function(cas)
 {
-    return false;
+    return this.bm.GetDecor(cas);
 }
 
 function NewFRk86()
