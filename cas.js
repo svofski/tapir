@@ -28,9 +28,9 @@ Cas.prototype.CreateHistogramDescription = function()
     var histogram_description = document.createElement("pre");
     histogram_description.setAttribute("id", "histogram-description-pre");
     histogram_description.innerHTML = 
-        "Histogram analysis<br/>" +
-        "RR interval peaks at: " + this.Short + "<br/>" +
-        "NR interval peaks at: " + this.Long + "<br/>";
+        "Анализ гистограммы<br/>" +
+        "Короткий интервал: " + this.Short + "<br/>" +
+        "Длинный интервал: " + this.Long + "<br/>";
 
     return histogram_description;
 }
@@ -242,10 +242,15 @@ Cas.prototype.paintHistogram = function(h, max, peaks)
 Cas.prototype.IntervalToSample = function(i) 
 {
     //return this.intervals[i][1];//-this.Long;// + this.Short;
-    if (this.getInterval(i)[0] == "L") {
-        return this.intervals[i][1] + this.Short;
-    } else {
-        return this.intervals[i][1];
+    if (i < this.intervals.length) {
+        var dLi = this.dilate * Math.abs(this.intervals[i][0] - this.Long);
+        var dSi = Math.abs(this.intervals[i][0] - this.Short);
+        //if (this.getInterval(i)[0] == "L") {
+        if (dLi < dSi) {
+            return this.intervals[i][1] + this.Short;
+        } else {
+            return this.intervals[i][1];
+        }
     }
 }
 

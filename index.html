@@ -450,6 +450,13 @@
     }
     #priparki {
         display: inline-block;
+        border: 1px solid #222;
+        padding: 0.25em;
+        margin: 0.5em;
+    }
+    #priparki .subhdr {
+        margin-bottom: 1em;
+        font-family: monospace;
     }
     #priparki-histogramki {
         margin-bottom: 1em;
@@ -510,7 +517,7 @@
 
 <body style="padding:0;margin:0;">
     <div class="fileUpload">
-        <span>Котенок по имени Вав</span>
+        <span>Сюда можно дропнуть Вав с программой для Вектора, Кристы, Радио-86РК и мало ли чего еще</span>
         <input class="upload" type="file" id="fileselect" name="fileselect[]"/>
     </div>
     <div id="graphics-div">
@@ -525,16 +532,19 @@
     <div id="text-div">
         <div id="priparki-histogramki">
         <div id="priparki">
+            <div class="subhdr">
+                Припарки
+            </div>
             <fieldset class="inline-ffs">
-                <legend>DC filter</legend>
-                <input id="fir0" type="radio" name="fir" value="bypass" checked="checked"/>Bypass<br />
-                <input id="fir1" type="radio" name="fir" value="fira" />FIR A<br />
-                <input id="fir2" type="radio" name="fir" value="firb" />FIR B<br />
+                <legend>Фильтры</legend>
+                <input id="fir0" type="radio" name="fir" value="bypass" checked="checked"/>Сквозной канал<br />
+                <input id="fir1" type="radio" name="fir" value="fira" />КИХ A<br />
+                <input id="fir2" type="radio" name="fir" value="firb" />КИХ Б<br />
             </fieldset>
             <fieldset class="inline-ffs">
-                <legend>Skew</legend>
-                <input id="dilate0" type="radio" name="dil" checked="checked"/>None<br/>
-                <input id="dilate2" type="radio" name="dil"/>Long 2x<br/>
+                <legend>Перекос</legend>
+                <input id="dilate0" type="radio" name="dil" checked="checked"/>Поровну<br/>
+                <input id="dilate2" type="radio" name="dil"/>Предпочитать короткий интервал<br/>
             </fieldset>
         </div>
         <div id="histogram-etc"> 
