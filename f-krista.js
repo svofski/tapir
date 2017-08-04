@@ -161,7 +161,7 @@ FKrista.prototype.eatoctet = function(sym, sym_start, sym_end)
                 this.bm.MarkFailure(this.H, this.checksum & 0xff, sym & 0xff);
             } else {
                 /* Payload OK, expect next block */
-                console.log("OK block at: " + Util.hex8(this.H) + Util.hex8(this.L));
+                //console.log("OK block at: " + Util.hex8(this.H) + Util.hex8(this.L));
                 this.bm.MarkLoaded(this.H, sym & 0xff, sym & 0xff);
 
                 var yet = this.bm.CountMissing();
@@ -239,7 +239,7 @@ FKrista.prototype.dump = function(wav, cas)
                 return that.bm.IsLoaded(addr >> 8);
             },
             function(addr) {
-                return that.bm.InfoObject(addr >> 8);
+                return that.bm.KrinfoObject(addr >> 8);
             },
             /* navigate to */
             function(e) {

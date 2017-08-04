@@ -78,6 +78,19 @@ Blockmap.prototype.InfoObject = function(blknum)
     return false;
 }
 
+Blockmap.prototype.KrinfoObject = function(blknum)
+{
+    if (this.blockmap[blknum]) {
+        return {
+            blknum: blknum,
+            sblknum: 0,
+            cs_calculated: this.blockmap[blknum][1],
+            cs_read: this.blockmap[blknum][2]
+        };
+    }
+    return false;
+}
+
 Blockmap.prototype.GetRegions = function(blknum, type)
 {
     var list = this.blockmap[blknum][3];
