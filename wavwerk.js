@@ -1,4 +1,4 @@
-/* wavwerk is an interface foreading a wav */
+/* wavwerk is an interface for reading a wav */
 
 /** @constructor */
 function Wavwerk(wav)

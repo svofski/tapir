@@ -558,6 +558,7 @@
     <script language="JavaScript" src="./filter.js" type="text/javascript"><!--x--></script>
     <script language="JavaScript" src="./cas.js" type="text/javascript"><!--x--></script>
     <script language="JavaScript" src="./wav.js" type="text/javascript"><!--x--></script>
+    <script language="JavaScript" src="./viewer.js" type="text/javascript"><!--x--></script>
     <script language="JavaScript" src="./wavwerk.js" type="text/javascript"><!--x--></script>
     <script language="JavaScript" src="./scanner.js" type="text/javascript"><!--x--></script>
     <script language="JavaScript" src="./f-raw.js" type="text/javascript"><!--x--></script>
@@ -571,7 +572,8 @@
         var lastinput = null;
         var defaultfilter = null;
         var defaultdilate = 1;
-        var fileSelectHandler = function(e, oldinput, filter, dilate) {
+        var view = null;
+        var fileSelectHandler = function(e, oldinput, filter, dilate, oldview) {
             defaultfilter = filter || defaultfilter;
             defaultdilate = dilate || defaultdilate;
             if (!e && !oldinput) {
@@ -591,12 +593,12 @@
                     var wav = new Wav(file.name, new Uint8Array(read.result), 
                             defaultfilter);
                     if (wav) {
-                        wav.dump = document.getElementById("dump");
-                        wav.zcanvas = document.getElementById("wav-zoom");
-                        wav.ocanvas = document.getElementById("wav-overview");
-                        wav.wcanvas = document.getElementById("wav-window");
-                        wav.buildPeaks();
-                        wav.attachEvents();
+                        view = oldview || new Viewer(
+                                document.getElementById("dump"),
+                                document.getElementById("wav-zoom"),
+                                document.getElementById("wav-overview"),
+                                document.getElementById("wav-window"));
+                        view.setWav(wav);
 
                         var wavwerk = new Wavwerk(wav);
                         var bpskanalyser = new Cas(wavwerk);
@@ -604,7 +606,6 @@
 
                         var formats = [new FRaw(), new FKrista(), new FVector(),
                             NewFRk86(), NewFMicrosha(), NewFSpec()];
-                            //new FRk()];
 
                         var formats_done = formats.length;
                         var most_confident = {confidence:0, fmt: formats[0]};
@@ -619,7 +620,7 @@
                                 textcontainer = document.getElementById("dump-etc");
                                 var dump = most_confident.fmt.dump(wav, bpskanalyser);
                                 textcontainer.appendChild(dump);
-                                wav.Decorate(most_confident.fmt.GetDecor(bpskanalyser));
+                                view.Decorate(most_confident.fmt.GetDecor(bpskanalyser));
                             }
                         };
 
@@ -665,11 +666,14 @@
 
         var fitlerchange = function(e) {
             switch (e.target.id) {
-                case "fir0":    fileSelectHandler(null, lastinput, new Bypass());
+                case "fir0":    fileSelectHandler(null, lastinput, new Bypass(), 
+                                        false, view);
                                 break;
-                case "fir1":    fileSelectHandler(null, lastinput, new Filter(Filter.A));
+                case "fir1":    fileSelectHandler(null, lastinput, 
+                                        new Filter(Filter.A), false, view);
                                 break;
-                case "fir2":    fileSelectHandler(null, lastinput, new Filter(Filter.B));
+                case "fir2":    fileSelectHandler(null, lastinput, 
+                                        new Filter(Filter.B), false, view);
                                 break;
                 default:
                                 break;
@@ -681,9 +685,9 @@
 
         var dilatechange = function(e) {
             switch (e.target.id) {
-                case "dilate0": fileSelectHandler(null, lastinput, null, 1);
+                case "dilate0": fileSelectHandler(null, lastinput, null, 1, view);
                                 break;
-                case "dilate2": fileSelectHandler(null, lastinput, null, 2);
+                case "dilate2": fileSelectHandler(null, lastinput, null, 2, view);
                                 break;
             }
         };
