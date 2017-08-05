@@ -6,7 +6,12 @@
 function Cas(wavwerk) 
 {
     this.wavwerk = wavwerk;
-    this.dilate = 1;
+    this.SetSkew(1);
+}
+
+Cas.prototype.SetSkew = function(s)
+{
+    this.skew = s;
 }
 
 Cas.prototype.ScanBPSK = function(finished_cb)
@@ -241,11 +246,9 @@ Cas.prototype.paintHistogram = function(h, max, peaks)
 
 Cas.prototype.IntervalToSample = function(i) 
 {
-    //return this.intervals[i][1];//-this.Long;// + this.Short;
     if (i < this.intervals.length) {
-        var dLi = this.dilate * Math.abs(this.intervals[i][0] - this.Long);
+        var dLi = this.skew * Math.abs(this.intervals[i][0] - this.Long);
         var dSi = Math.abs(this.intervals[i][0] - this.Short);
-        //if (this.getInterval(i)[0] == "L") {
         if (dLi < dSi) {
             return this.intervals[i][1] + this.Short;
         } else {
@@ -254,15 +257,15 @@ Cas.prototype.IntervalToSample = function(i)
     }
 }
 
-Cas.prototype.getInterval = function(i, dilate)
+Cas.prototype.getInterval = function(i, skew)
 {
     /* Should be 1, but on some fucked up tapes, up to 2 does magic */
-    var dilate_factor = dilate ? dilate : this.dilate;
+    var skew_factor = skew ? skew : this.skew;
 
-    var dLi = dilate_factor * Math.abs(this.intervals[i][0] - this.Long);
+    var dLi = skew_factor * Math.abs(this.intervals[i][0] - this.Long);
     var dSi = Math.abs(this.intervals[i][0] - this.Short);
 
-    var dLi1 = dilate_factor * Math.abs(this.intervals[i+1][0] - this.Long);
+    var dLi1 = skew_factor * Math.abs(this.intervals[i+1][0] - this.Long);
     var dSi1 = Math.abs(this.intervals[i+1][0] - this.Short);
 
 //    if (dLi === dSi) {

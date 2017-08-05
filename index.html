@@ -543,8 +543,8 @@
             </fieldset>
             <fieldset class="inline-ffs">
                 <legend>Перекос</legend>
-                <input id="dilate0" type="radio" name="dil" checked="checked"/>Поровну<br/>
-                <input id="dilate2" type="radio" name="dil"/>Предпочитать короткий интервал<br/>
+                <input id="skew0" type="radio" name="dil" checked="checked"/>Поровну<br/>
+                <input id="skew2" type="radio" name="dil"/>Предпочитать короткий интервал<br/>
             </fieldset>
         </div>
         <div id="histogram-etc"> 
@@ -571,11 +571,11 @@
         var target = document.getElementById("fileselect");
         var lastinput = null;
         var defaultfilter = null;
-        var defaultdilate = 1;
+        var defaultskew = 1;
         var view = null;
-        var fileSelectHandler = function(e, oldinput, filter, dilate, oldview) {
+        var fileSelectHandler = function(e, oldinput, filter, skew, oldview) {
             defaultfilter = filter || defaultfilter;
-            defaultdilate = dilate || defaultdilate;
+            defaultskew = skew || defaultskew;
             if (!e && !oldinput) {
                 return;
             }
@@ -602,7 +602,7 @@
 
                         var wavwerk = new Wavwerk(wav);
                         var bpskanalyser = new Cas(wavwerk);
-                        bpskanalyser.dilate = defaultdilate;
+                        bpskanalyser.SetSkew(defaultskew);
 
                         var formats = [new FRaw(), new FKrista(), new FVector(),
                             NewFRk86(), NewFMicrosha(), NewFSpec()];
@@ -683,17 +683,17 @@
         document.getElementById("fir1").addEventListener("change", fitlerchange, false);
         document.getElementById("fir2").addEventListener("change", fitlerchange, false);
 
-        var dilatechange = function(e) {
+        var skewchange = function(e) {
             switch (e.target.id) {
-                case "dilate0": fileSelectHandler(null, lastinput, null, 1, view);
+                case "skew0": fileSelectHandler(null, lastinput, null, 1, view);
                                 break;
-                case "dilate2": fileSelectHandler(null, lastinput, null, 2, view);
+                case "skew2": fileSelectHandler(null, lastinput, null, 2, view);
                                 break;
             }
         };
 
-        document.getElementById("dilate0").addEventListener("change", dilatechange, false);
-        document.getElementById("dilate2").addEventListener("change", dilatechange, false);
+        document.getElementById("skew0").addEventListener("change", skewchange, false);
+        document.getElementById("skew2").addEventListener("change", skewchange, false);
  
 
     </script>
