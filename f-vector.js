@@ -148,8 +148,8 @@ FVector.prototype.eatoctet = function(sym, sym_start, sym_end)
                         (this.NameBlock.Start + this.NameBlock.Count - 1) * 8);
             } else {
                 this.confidence -= 100;
-                this.errormsg = "CS0 Expected=" + Util.hex8(this.cs0) + 
-                    " Found=" + Util.hex8(sym);
+                this.errormsg = "Nameblock checksum Need=" + Util.hex8(this.cs0) + 
+                    " Read=" + Util.hex8(sym);
             }
             this.Sblk_sym_end = sym_end;
             this.state = 0;
@@ -196,7 +196,6 @@ FVector.prototype.eatoctet = function(sym, sym_start, sym_end)
             this.cs0_sym_end = sym_end;
             break;
         case 10:
-            //this.mem[this.SblkAddr + this.dummycount] = sym;
             /* Load into temporary buffer */
             this.blockbuf[this.dummycount] = sym;
             this.checksum += sym;
@@ -219,6 +218,10 @@ FVector.prototype.eatoctet = function(sym, sym_start, sym_end)
             if (checksum_ok) {
                 this.state = 0;
                 this.confidence += 100;
+                /* Inform if it's a recovered block */
+                if (this.bm.IsFailure(blknum)) {
+                    this.errormsg = "Mended broken sblk @" + Util.hex16(this.SblkAddr);
+                }
                 /* Clear the subblock in the block map */
                 this.bm.MarkLoaded(blknum);
                 /* Copy into the main memory */
@@ -226,10 +229,10 @@ FVector.prototype.eatoctet = function(sym, sym_start, sym_end)
                     this.mem[this.SblkAddr + i] = this.blockbuf[i];
                 }
             } else {
-                this.errormsg = "Payload checksum mismatch: @" +
+                this.errormsg = "Payload checksum @" +
                     Util.hex16(this.SblkAddr) + 
                     " sblk=" + Util.hex8(this.sblk) + 
-                    " calculated=" + Util.hex8(this.checksum & 0xff) +
+                    " calc=" + Util.hex8(this.checksum & 0xff) +
                     " read=" + Util.hex8(sym);
                 this.state = 0;
                 this.confidence -= 100;

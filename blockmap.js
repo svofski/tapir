@@ -31,6 +31,11 @@ Blockmap.prototype.MarkFailure = function(blknum, cs1, cs2)
     }
 }
 
+Blockmap.prototype.IsFailure = function(blknum)
+{
+    return this.blockmap[blknum] && this.blockmap[blknum][0] < -1;
+}
+
 Blockmap.prototype.Init = function(single, start, count)
 {
     if (!this.blockmap) {

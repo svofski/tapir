@@ -15,6 +15,9 @@ Scanner.prototype.Scan = function(result_cb)
 
 Scanner.prototype.scan = function()
 {
+    this.log = document.createElement("pre");
+    this.log.innerHTML += "<br/>" + this.format.FormatName + ":<br/>";
+
     var bitstate = 0;
     var outbit = 0;
 
@@ -93,12 +96,11 @@ Scanner.prototype.scan = function()
 
             /* use the format sniffers */
             if (insync) {
-                //var s_start = history[history_head];
-                //var s_end = history[history_tail];
                 insync = !this.format.eatoctet(sym, s_start, s_end);
                 if (this.format.errormsg) {
-                    console.log("ERROR: ", this.format.FormatName, 
-                            this.format.errormsg);
+                    //console.log("ERROR: ", this.format.FormatName, 
+                    //        this.format.errormsg);
+                    this.log.innerHTML += this.format.errormsg + "<br/>";
                     if (this.format.errormsg === FORMAT_GAVE_UP) {
                         abort = true;
                     }

@@ -512,6 +512,16 @@
         margin-left: 1em;
         image-rendering: pixelated;
     } 
+
+    #messages {
+        border: 1px solid #222;
+        padding: 0.25em;
+        margin: 0.5em;
+        float: right;
+        width: 30em;
+        max-height: 100vh;
+        overflow-y: auto;
+    }
     </style>
 </head>
 
@@ -549,7 +559,10 @@
         </div>
         <div id="histogram-etc"> 
         </div>
-    </div>
+        <details id="messages">
+            <summary>Журнал сообщений</summary>
+            <div id="log-etc"></div>
+        </details>
         <div id="dump-etc"> </div>
     </div>
     <script language="JavaScript" src="./util.js" type="text/javascript"><!--x--></script>
@@ -611,6 +624,8 @@
                         var most_confident = {confidence:0, fmt: formats[0]};
 
                         var displayresult = function(scanner) {
+                            logcontainer = document.getElementById("log-etc");
+                            logcontainer.appendChild(scanner.log);
                             if (scanner.format.Confidence() > most_confident.confidence)
                             {
                                 most_confident.confidence = scanner.format.Confidence();
@@ -618,24 +633,18 @@
                             }
                             if (--formats_done === 0) {
                                 textcontainer = document.getElementById("dump-etc");
-                                var dump = most_confident.fmt.dump(wav, bpskanalyser);
+                                var dump = most_confident.fmt.dump(view, bpskanalyser);
                                 textcontainer.appendChild(dump);
                                 view.Decorate(most_confident.fmt.GetDecor(bpskanalyser));
                             }
                         };
 
                         bpskanalyser.ScanBPSK(function(bpsk) {
-                            hcontainer = document.getElementById("histogram-etc");
-                            for (var i = 0, end = hcontainer.childElementCount; 
-                                    i < end; ++i) {
-                                hcontainer.removeChild(hcontainer.children[0]);
-                            }
-                            dumpc = document.getElementById("dump-etc");
-                            for (var i = 0, end = dumpc.childElementCount; 
-                                    i < end; ++i) {
-                                dumpc.removeChild(dumpc.children[0]);
-                            }
+                            Util.deleteChildren("histogram-etc");
+                            Util.deleteChildren("dump-etc");
+                            Util.deleteChildren("log-etc");
                                              
+                            var hcontainer = document.getElementById("histogram-etc");
                             hcontainer.appendChild(bpsk.CreateHistogramCanvas());
                             hcontainer.appendChild(bpsk.CreateHistogramDescription());
 

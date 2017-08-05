@@ -174,3 +174,12 @@ Util.randomColor = function()
     var b = Math.trunc(Math.random() * 15).toString(16);
     return "#" + r + g + b;
 };
+
+Util.deleteChildren = function(id)
+{
+    var parent = document.getElementById(id);
+    for (var i = 0, end = parent.childElementCount; 
+            id && i < end; ++i) {
+        parent.removeChild(parent.children[0]);
+    }
+};
