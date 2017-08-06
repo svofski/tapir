@@ -1,13 +1,15 @@
 function Util() {
 }
 
-Util.char8 = function(val) {
+Util.char8 = function(val, transparent) {
     var res = '.';
     if (val > 32 && val < 127) res = String.fromCharCode(val);
-    if (res === '<') {
-        res = '&lt;'; 
-    } else if (res === '>') {
-        res = '&gt;';
+    if (!transparent) {
+        if (res === '<') {
+            res = '&lt;'; 
+        } else if (res === '>') {
+            res = '&gt;';
+        }
     }
     return res;
 };
@@ -31,7 +33,7 @@ Util.toTargetEncoding = function(str, encoding) {
     return toEncoding(str, encoding);
 };
 
-Util.dumpspan = function(mem, org, mode) {
+Util.dumpspan = function(mem, org, mode, transparent) {
     var result = "";
     var nonempty = false;
     var conv = mode ? Util.char8 : Util.hex8;
@@ -41,13 +43,13 @@ Util.dumpspan = function(mem, org, mode) {
     for (var i = org; i < org+16; i++) {
         if (mem[i] !== undefined) nonempty = true;
         if (mode == 1) {
-            result += conv(mem[i]);
+            result += conv(mem[i], transparent);
         } else {
             result += (i > org && i%8 === 0) ? "-" : " ";
             if (mem[i] === undefined) {                                    
                 result += '  ';
             } else {
-                result += conv(mem[i]);
+                result += conv(mem[i], transparent);
             }
         }
     }
@@ -83,6 +85,18 @@ Util.dumpcanvas = function(mem, org)
     return c;
 }
 
+Util.infoclick_wrapper = function(cb)
+{
+    return function(e) {
+        if (e.target.className === "bi") {
+            var fake_e = {target: e.target.parentElement};
+            cb(fake_e);
+        } else {
+            cb(e);
+        }
+    };
+}
+
 Util.dump = function(mem, title, pretitle, is_valid, info_cb, infoclick_cb) {
     var org = 0;
 
@@ -113,7 +127,7 @@ Util.dump = function(mem, title, pretitle, is_valid, info_cb, infoclick_cb) {
         var info;
         if (info_cb) info = info_cb(i);
 
-        var span = this.dumpspan(mem, i, 0);    /* mode 0: hex */
+        var span = this.dumpspan(mem, i, 0, true);    /* mode 0: hex */
         var valid = true;
         var p1;
         if (span || !lastempty) {
@@ -124,19 +138,19 @@ Util.dump = function(mem, title, pretitle, is_valid, info_cb, infoclick_cb) {
             if (info) {
                 p1.setAttribute("blk", info.blknum);
                 p1.setAttribute("sblk", info.sblknum);
-                p1.addEventListener("click", infoclick_cb, false);
+                //p1.addEventListener("click", infoclick_cb, false);
+                p1.addEventListener("click", 
+                        Util.infoclick_wrapper(infoclick_cb), false);
             }
         }                                                                       
         if (span) {
             var text = Util.hex16(i) + ": ";
             text += span;
             text += '  ';
-            text += this.dumpspan(mem, i, 1);   /* mode 1: characters */
-            p1.innerHTML = text;
+            text += this.dumpspan(mem, i, 1, true);   /* mode 1: characters */
+            p1.innerText = text;
             p1.appendChild(this.dumpcanvas(mem, i));
             result.push(p1);
-
-            //result.push(this.dumpcanvas(mem, i));
 
             if (!valid && info) {
                 if (info) {
@@ -145,16 +159,13 @@ Util.dump = function(mem, title, pretitle, is_valid, info_cb, infoclick_cb) {
                     text = "Block: " + Util.hex8(info.blknum) + "." + info.sblknum;
                     text += " Read: " + Util.hex8(info.cs_read);
                     text += " Eval: " + Util.hex8(info.cs_calculated);
-                    binfo.innerHTML = text;
+                    binfo.innerText = text;
                     p1.appendChild(binfo);
-                    //result.push(binfo);
                 }
             }
-            //result.push(document.createElement("br"));
             lastempty = false;
         }
         if (!span && !lastempty) {
-            //result += " </pre><br/>";
             lastempty = true;
         }
     }

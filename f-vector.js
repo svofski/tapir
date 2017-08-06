@@ -322,7 +322,7 @@ FVector.prototype.dump = function(wav, cas)
                 var blknum = addr >> 5;
                 return that.bm.InfoObject(blknum);
             },
-            /* navigate to */
+            /* infoclick_cb / navigate to */
             function(e) {
                 var blknum = parseInt(e.target.getAttribute("blk")) << 3;
                 blknum += parseInt(e.target.getAttribute("sblk"));
