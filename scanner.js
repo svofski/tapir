@@ -15,8 +15,7 @@ Scanner.prototype.Scan = function(result_cb)
 
 Scanner.prototype.scan = function()
 {
-    this.log = document.createElement("pre");
-    this.log.innerHTML += "<br/>" + this.format.FormatName + ":<br/>";
+    var tlog = "";
 
     var bitstate = 0;
     var outbit = 0;
@@ -100,7 +99,7 @@ Scanner.prototype.scan = function()
                 if (this.format.errormsg) {
                     //console.log("ERROR: ", this.format.FormatName, 
                     //        this.format.errormsg);
-                    this.log.innerHTML += this.format.errormsg + "<br/>";
+                    tlog += this.format.errormsg + "<br/>";
                     if (this.format.errormsg === FORMAT_GAVE_UP) {
                         abort = true;
                     }
@@ -118,5 +117,6 @@ Scanner.prototype.scan = function()
             sym = 0;
         }
     }
-    //this.rawbytes = bytes.slice(0, bytecount);
+    this.log = document.createElement("pre");
+    this.log.innerHTML += "<br/>" + this.format.FormatName + ":<br/>" + tlog;
 }
