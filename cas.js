@@ -90,49 +90,62 @@ Cas.prototype.scanIntervals = function()
     this.histogram = histogram;
 }
 
+Cas.prototype.downhill = function(hmin, hmax)
+{
+    var h = this.histogram;
+    /* Find a maximum */
+    var max = 0;
+    var max_i = 0;
+    for (var i = hmin; i < hmax - 1; ++i) {
+        if (h[i] > max) {
+            max = h[i];
+            max_i = i;
+        }
+    }
+    var small_valley = max/100 * 30;
+
+    /* Descend off its shoulders until a valley on each side */
+    var i1 = max_i, i2 = max_i;
+    for (var moved = 0;; moved = 0) {
+        if (i1 > 0 && h[i1 - 1] < h[i1]) {
+            --i1;
+            ++moved;
+        } else if (i1 > 0 && h[i1 - 1] >= small_valley && h[i1 - 1] - small_valley < h[i1]) {
+            --i1;
+            ++moved;
+        }
+        if (i2 < h.length && h[i2 + 1] < h[i2]) {
+            ++i2;
+            ++moved;
+        } else if (i2 < h.length && h[i2 + 1] >= small_valley && h[i2 + 1] - small_valley < h[i2]) {
+            ++i2;
+            ++moved;
+        }
+        if (!moved) break;
+    }
+
+    /* Return the peak and its bounds, and the height */
+    return [i1, max_i, i2, max];
+}
+
 Cas.prototype.analHistogram2 = function()
 {
     var h = this.histogram;
     var maxima = [];
+    var hills = [];
 
-    var hmin = 1, hmax = h.length;
+    /* Detect 3 peaks and pick the two highest */
+    hills[0] = this.downhill(0, h.length);              // first one
+    hills[1] = this.downhill(0, hills[0][0] - 1);      // one to the left
+    hills[2] = this.downhill(hills[0][2] + 1, h.length);      // one to the right
 
-    for (var m = 0; m < 2; ++m) {
-        /* Find a maximum */
-        var max = 0;
-        var max_i = 0;
-        for (var i = hmin; i < hmax - 1; ++i) {
-            if (h[i] > max) {
-                max = h[i];
-                max_i = i;
-            }
-        }
-        var small_valley = max/100 * 30;
+    maxima[0] = hills[0];
+    maxima[1] = (hills[1][3] > hills[2][3]) ? hills[1] : hills[2];
 
-        /* Descend off its shoulders until a valley on each side */
-        var i1 = max_i, i2 = max_i;
-        for (var moved = 0;; moved = 0) {
-            if (i1 > 0 && h[i1 - 1] < h[i1]) {
-                --i1;
-                ++moved;
-            } else if (i1 > 0 && h[i1 - 1] >= small_valley && h[i1 - 1] - small_valley < h[i1]) {
-                --i1;
-                ++moved;
-            }
-            if (i2 < h.length && h[i2 + 1] < h[i2]) {
-                ++i2;
-                ++moved;
-            } else if (i2 < h.length && h[i2 + 1] >= small_valley && h[i2 + 1] - small_valley < h[i2]) {
-                ++i2;
-                ++moved;
-            }
-            if (!moved) break;
-        }
-        
-        /* Record the peak and its bounds */
-        maxima[m] = [i1, max_i, i2];
-        /* Update eligible interval and proceed to the next one */
-        hmin = i2 + 1;
+    if (maxima[0][1] > maxima[1][1]) {
+        var tmp = maxima[1];
+        maxima[1] = maxima[0];
+        maxima[0] = tmp;
     }
 
     this.totalmax = Math.max(h[maxima[0][1]], h[maxima[1][1]]);
@@ -140,8 +153,6 @@ Cas.prototype.analHistogram2 = function()
 
     this.Short = maxima[0][1];
     this.Long = maxima[1][1];
-
-    //console.log(maxima);
 }
 
 Cas.prototype.analyzeHistogram = function()
