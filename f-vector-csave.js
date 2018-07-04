@@ -5,7 +5,7 @@ function FVectorCsave()
 {
     this.FormatName = "Вектор-06ц CAS";
     this.confidence = 0;
-    this.maxconfidence = 350;
+    this.maxconfidence = 400;
     this.reset();
 }
 
@@ -42,7 +42,6 @@ FVectorCsave.prototype.eatoctet = function(sym, sym_start, sym_end)
                 this.state = 1;
 
                 this.Header_sym_start = sym_end;
-                this.Header_sym_end  = 0;
                 this.Name_sym_start = -1;
                 this.Name_sym_end = 0;
 
@@ -75,38 +74,36 @@ FVectorCsave.prototype.eatoctet = function(sym, sym_start, sym_end)
                 this.confidence = -1001;
             }
             if (sym === 0x0) {
-                this.dummycount = 0;
+                this.dummycount = 1;
                 this.state = 3;
             } else {
                 this.Name_sym_end = sym_end;
             }
             break;
         case 3: /* end of header */
-            this.Header_sym_end = sym_start;
             if (sym === 0x0) {
                 ++this.dummycount;
-                if (this.dummycount == 3) {
+                if (this.dummycount === 3) {
                     this.state = 4;
                     this.confidence += 50;
+
+                    /* create the header block */
+                    this.bm.Region(0, this.Header_sym_start, sym_end,
+                        "block");
+                    this.bm.Region(0, this.Header_sym_start, sym_end,
+                        "name");
+                    for (var i = 0; i < this.bytemarks.length; ++i) {
+                        this.bm.Region(0, this.bytemarks[i][0], 
+                            this.bytemarks[i][1], "section-byte-alt").text = "D3";
+                    }
+                    this.bm.Region(0, this.Name_sym_start, this.Name_sym_end,
+                        "section-name").text = this.FileName;
                 }
             }
+            break;
         case 4: /* mid-leader */
-            this.Header_sym_end = sym_start;
-
             if (sym === 0x55) {
                 this.state = 5;
-
-                /* create the header block */
-                this.bm.Region(0, this.Header_sym_start, this.Header_sym_end,
-                    "block");
-                this.bm.Region(0, this.Header_sym_start, this.Name_sym_end,
-                    "name");
-                for (var i = 0; i < this.bytemarks.length; ++i) {
-                    this.bm.Region(0, this.bytemarks[i][0], 
-                        this.bytemarks[i][1], "section-byte-alt").text = "D3";
-                }
-                this.bm.Region(0, this.Name_sym_start, this.Name_sym_end,
-                    "section-name").text = this.FileName;
             }
             break;
         case 5:
