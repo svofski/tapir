@@ -6,7 +6,7 @@ See and browse the waveform, the headers and individual bytes in a nice interact
 
 Supported formats:
 
-  * Вектор-06ц ROM
+  * Вектор-06ц ROM,CAS/BAS
   * Криста-2 ROM
   * Радио-86РК .rk
   * Микроша
