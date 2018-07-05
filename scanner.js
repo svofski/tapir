@@ -104,13 +104,9 @@ Scanner.prototype.scan = function()
                         abort = true;
                     }
                 }
-                if (!insync) {
-                    //console.log("RESYNC by " + this.formats[f].FormatName);
-                    i += 16;
-                    syncbyte = 0;
-                }
-                //console.log("Confidence: " + f + "=" + 
-                //        this.formats[f].confidence);
+                //if (!insync) {
+                //    //console.log("RESYNC by " + this.formats[f].FormatName);
+                //}
             }
 
             bitcount = 0;
