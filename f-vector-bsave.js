@@ -1,15 +1,15 @@
 "use strict";
 
 /** @constructor */
-function FVectorCsave()
+function FVectorBsave()
 {
-    this.FormatName = "Вектор-06ц CAS/BAS";
+    this.FormatName = "Вектор-06ц CAS/MON";
     this.confidence = 0;
     this.maxconfidence = 400;
     this.reset();
 }
 
-FVectorCsave.prototype.reset = function()
+FVectorBsave.prototype.reset = function()
 {
     this.confidence = 0;
     this.mem = [];
@@ -20,12 +20,12 @@ FVectorCsave.prototype.reset = function()
     this.FileName = "";
 }
 
-FVectorCsave.prototype.Confidence = function()
+FVectorBsave.prototype.Confidence = function()
 {
     return this.confidence;
 }
 
-FVectorCsave.prototype.eatoctet = function(sym, sym_start, sym_end)
+FVectorBsave.prototype.eatoctet = function(sym, sym_start, sym_end)
 {
     var resync = false;
     this.errormsg = false;
@@ -51,8 +51,8 @@ FVectorCsave.prototype.eatoctet = function(sym, sym_start, sym_end)
                 this.bytemarks = [];
             }
             break;
-        case 1: /* CAS/BAS header magic: D3 D3 D3 D3 */
-            if (sym === 0xd3) {
+        case 1: /* CAS/MON header magic: D2 D2 D2 D2 */
+            if (sym === 0xd2) {
                 this.bytemarks[this.dummycount] = [sym_start, sym_end, sym];
                 ++this.dummycount;
 
@@ -102,10 +102,8 @@ FVectorCsave.prototype.eatoctet = function(sym, sym_start, sym_end)
                 }
             }
             break;
-        case 4: /* mid-leader */
-            if (sym === 0x55) {
-                this.state = 5;
-            }
+        case 4: /* mid-leader zeroes, ignore */
+            this.state = 5;
             break;
         case 5:
             if (sym === 0xe6) {
@@ -116,89 +114,63 @@ FVectorCsave.prototype.eatoctet = function(sym, sym_start, sym_end)
                 this.dummycount = 0;
             }
             break;
-        case 6: /* CAS body magic: D3 D3 D3 00 */
-            if (sym === 0xd3) {
-                this.bytemarks[this.dummycount] = [sym_start, sym_end, sym];
-                ++this.dummycount;
-
-                if (this.dummycount == 3) {
-                    this.confidence += 150;
-                    this.state = 7;
-                }
-            }
-            break;
-        case 7:  /* pre-payload */
-            if (sym === 0) {
-                this.bytemarks[this.dummycount] = [sym_start, sym_end, sym];
-                ++this.dummycount;
-
+        case 6: /* load start, load end (big endian) */
+            if (this.dummycount == 0) {
                 this.bm.Init(1);
-                this.Blocknik = this.bm.Region(1, this.bytemarks[0][0],
-                    0, "block");
-
-                for (var i = 0; i < this.bytemarks.length; ++i) {
-                    this.bm.Region(1, this.bytemarks[i][0], 
-                        this.bytemarks[i][1], "section-byte-alt").text = 
-                            Util.hex8(this.bytemarks[i][2]);
-                }
- 
-                this.bytemarks = [];
-                this.dummycount = 0;
-                this.checksum = 0;
-                this.state = 8; // payload begins
+                this.Blocknik = this.bm.Region(1,sym_start, 0, "block");
             }
-            break;
-        case 8: /* payload */
-            this.mem[this.count++] = sym;
-            this.checksum = 0xffff & (this.checksum + sym);
-            if (sym === 0) {
-                this.bytemarks[this.dummycount] = [sym_start, sym_end, sym];
-                ++this.dummycount; 
-                if (this.dummycount === 3) {
 
-                    this.count -= 3; // exclude trailing zeroes from the payload
-                    this.mem.splice(this.count, 3);
-
-                    this.Blocknik.sblk_sym_end = sym_end;
-                    this.state = 9; // end
-                    this.dummycount = 0;
-
-                    for (var i = 0; i < this.bytemarks.length; ++i) {
-                        this.bm.Region(1, this.bytemarks[i][0], 
-                            this.bytemarks[i][1], "section-byte-alt").text = 
-                                Util.hex8(this.bytemarks[i][2]);
-                    }
-                }
-            } else {
-                // not three zeroes in a row, reset state
-                this.dummycount = 0;
-                this.bytemarks = [];
-            }
-            break;
-            
-        case 9: /* checksum */
-            console.log("czech sum=", Util.hex16(this.checksum));
             this.bytemarks[this.dummycount] = [sym_start, sym_end, sym];
             ++this.dummycount;
-            if (this.dummycount === 2) {
-                this.Blocknik.sblk_sym_end = sym_end;
-                this.state = 100; // end;
 
-                this.bm.Region(1, this.bytemarks[0][0], this.bytemarks[0][1], 
-                    "section-cs0").text = Util.hex8(this.bytemarks[0][2]);
-                this.bm.Region(1, this.bytemarks[1][0], this.bytemarks[1][1], 
-                    "section-cs1").text = Util.hex8(this.bytemarks[1][2]);
+            if (this.dummycount == 4) {
+                this.confidence += 150;
+                this.state = 7;
 
-                let cs = this.bytemarks[0][2] + (this.bytemarks[1][2] << 8);
-                if (this.checksum === cs) {
-                    this.confidence += 100;
-                } else {
-                    this.confidence -= 33;
-                    this.errormsg = "Checksum mismatch: read=" + 
-                        Util.hex16(cs) + " actual=" + Util.hex16(this.checksum);
-                }
+                this.startaddr = ((this.bytemarks[0][2]<<8) & 0xff00) |
+                    (this.bytemarks[1][2] & 0xff);
+                this.endaddr = ((this.bytemarks[2][2]<<8) & 0xff00) |
+                    (this.bytemarks[3][2] & 0xff);
+                this.count = this.startaddr;
+
+                this.checksum = 0;
+
+                // add decorators here
+                this.bm.Region(1, this.bytemarks[0][0], this.bytemarks[1][1],
+                    "section-byte-alt").text = "START:" + 
+                    Util.hex16(this.startaddr);
+                this.bm.Region(1, this.bytemarks[2][0], this.bytemarks[3][1],
+                    "section-byte-alt").text = "END:" + 
+                    Util.hex16(this.endaddr);
             }
-        case 10: /* end of header */
+            break;
+        case 7:  /* payload */
+            this.mem[this.count] = sym;
+            this.checksum = 0xff & (this.checksum + sym);
+            
+            if (this.count === this.endaddr) {
+                this.state = 8; 
+            } 
+            ++this.count;
+            break;
+        case 8: /* checksum */
+            console.log("czech sum=", Util.hex8(this.checksum));
+
+            this.Blocknik.sblk_sym_end = sym_end;
+            this.state = 100; // end;
+
+            this.bm.Region(1, sym_start, sym_end, "section-cs0").text = 
+                Util.hex8(this.bytemarks[0][2]);
+
+            if (this.checksum === sym) {
+                this.confidence += 100;
+            } else {
+                this.confidence -= 33;
+                this.errormsg = "Checksum mismatch: read=" + 
+                    Util.hex16(cs) + " actual=" + Util.hex16(this.checksum);
+            }
+            break;
+        case 10: /* end of line  */
             
  
         case 100:
@@ -208,7 +180,7 @@ FVectorCsave.prototype.eatoctet = function(sym, sym_start, sym_end)
     }
 }
 
-FVectorCsave.prototype.dump = function(wav, cas)
+FVectorBsave.prototype.dump = function(wav, cas)
 {
     return (function(that) {
         return Util.dump(that.mem, that.FormatName + ": " + 
@@ -223,7 +195,7 @@ FVectorCsave.prototype.dump = function(wav, cas)
     })(this);
 }
 
-FVectorCsave.prototype.GetDecor = function(cas)
+FVectorBsave.prototype.GetDecor = function(cas)
 {
     return this.bm.GetDecor(cas);
 }
