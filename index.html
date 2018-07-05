@@ -575,6 +575,7 @@
     <script language="JavaScript" src="./f-vector.js" type="text/javascript"><!--x--></script>
     <script language="JavaScript" src="./f-vector-csave.js" type="text/javascript"><!--x--></script>
     <script language="JavaScript" src="./f-vector-bsave.js" type="text/javascript"><!--x--></script>
+    <script language="JavaScript" src="./f-vector-edasm.js" type="text/javascript"><!--x--></script>
     <script language="JavaScript" src="./f-rk.js" type="text/javascript"><!--x--></script>
     <script language="JavaScript">
         const FORMAT_GAVE_UP = "la cucaracha ya no quiere caminar";
@@ -617,7 +618,8 @@
 
                         var formats = [new FRaw(), new FKrista(), new FVector(),
                             NewFRk86(), NewFMicrosha(), NewFSpec(),
-                            new FVectorCsave(), new FVectorBsave()];
+                            new FVectorCsave(), new FVectorBsave(), 
+                            new FVectorEDASM()];
 
                         var formats_done = formats.length;
                         var most_confident = {confidence:0, fmt: formats[0]};
