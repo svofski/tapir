@@ -144,7 +144,6 @@ FVectorEDASM.prototype.eatoctet = function(sym, sym_start, sym_end)
             }
             break;
         case 7:  /* payload */
-            console.log(Util.hex16(this.checksum));
             if (sym === 0xff || this.count === this.length) {
                 this.state = 8; 
                 this.bytemarks = [];
@@ -156,7 +155,6 @@ FVectorEDASM.prototype.eatoctet = function(sym, sym_start, sym_end)
             }
             break;
         case 8: /* checksum */
-            console.log("czech sum=", Util.hex16(this.checksum));
             this.bytemarks[this.dummycount] = [sym_start, sym_end, sym];
             ++this.dummycount;
             if (this.dummycount === 2) {
