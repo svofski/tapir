@@ -16,6 +16,10 @@ function RkBuf(mode)
             this.Check = this.CheckСпециалистъ;
             this.init = this.initLittlend;
             break;
+        case "ВекторДОС":
+            this.Check = this.CheckВекторДОС;
+            this.init = this.initBigend;
+            break;
     }
 }
 
@@ -40,6 +44,7 @@ RkBuf.prototype.Init = function(o1, o2, o3, o4)
     }
     this.csm_hi = this.csm_lo = 0;
     this.cs_hi = this.cs_lo = 0;
+    this.cs_vectordos = 0;
 }
 
 RkBuf.prototype.Put = function(octet)
@@ -64,6 +69,8 @@ RkBuf.prototype.Put = function(octet)
         this.csm_hi ^= octet;
     }
 
+    this.cs_vectordos = (this.cs_vectordos + octet) & 0xff;
+
     ++this.index;
 
     return this.count - this.index;
@@ -81,9 +88,13 @@ RkBuf.prototype.CheckСпециалистъ = function(hi, lo) {
     return this.cs_hi === lo && this.cs_lo === hi;
 }
 
+RkBuf.prototype.CheckВекторДОС = function(hi, lo) {
+    return this.cs_vectordos === hi;
+}
+
 
 /** @constructor */
-function FRk(rkbuf, name, maxconfidence)
+function FRk(rkbuf, name, maxconfidence, savedos)
 {
     /* confidence is variable to allow microsha to overrule rk */
 
@@ -91,6 +102,11 @@ function FRk(rkbuf, name, maxconfidence)
     this.rk = rkbuf;
     this.maxconfidence = maxconfidence; 
     this.reset();
+    if (savedos) {
+        this.savedos = {};
+        this.savedos.name = new Uint8Array(11);
+        this.savedos.nameidx = 0;
+    }
 }
 
 FRk.prototype.reset = function()
@@ -118,6 +134,13 @@ FRk.prototype.eatoctet = function(sym, sym_start, sym_end)
         this.errormsg = FORMAT_GAVE_UP;
         return false;
     }
+
+    if (!this.rawdump) {
+        this.rawdump = new Uint8Array(80000);
+        this.rawidx = 0;
+    }
+    this.rawdump[this.rawidx++] = sym;
+
     switch (this.state) {
         case 0: /* waiting for the sync */
             if (sym === 0xe6) {
@@ -170,6 +193,23 @@ FRk.prototype.eatoctet = function(sym, sym_start, sym_end)
             this.x.cs_start = sym_start;
             this.csm_hibuf = sym;
             this.state = 2.75;
+            if (this.savedos) {
+                if (this.rk.Check(sym,-1)) {
+                    this.confidence += 100;
+                } else {
+
+                }
+                this.state = 2.52;
+            }
+            break;
+        case 2.52:
+            // Vector-06c/SAVEDOS postamble
+            this.savedos.name[this.savedos.nameidx++] = sym; 
+            this.confidence += 10 * (sym >= 0x20 && sym < 0x80);
+            if (this.savedos.nameidx === 11) {
+                this.errormsg = "Filename: [" + String.fromCharCode.apply(null, this.savedos.name) + "]";
+                this.state = 100500;
+            }
             break;
         case 2.75:
             this.x.cs_end = sym_end;
@@ -237,8 +277,11 @@ FRk.prototype.eatoctet = function(sym, sym_start, sym_end)
 FRk.prototype.dump = function(wav, cas)
 {
     return (function(that) {
+        var append = that.savedos ? "  Имя: [" + 
+            String.fromCharCode.apply(null, that.savedos.name) + "]" : "";
+        //return Util.dump(that.rawdump.slice(0,that.rawidx-1), that.FormatName + ": " + 
         return Util.dump(that.mem, that.FormatName + ": " + 
-                that.confidence/that.maxconfidence*100 + "%",
+                Math.round(that.confidence/that.maxconfidence*100) + "%" + append,
                 false,
                 /* is_valid(addr) */
                 null,
@@ -266,4 +309,8 @@ function NewFMicrosha()
 
 function NewFSpec() {
     return new FRk(new RkBuf("Специалистъ"), "Специалистъ", 402);
+}
+
+function NewFVectorDOS() {
+    return new FRk(new RkBuf("ВекторДОС"), "Вектор-06ц SAVEDOS", 212, 1);
 }
