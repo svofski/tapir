@@ -199,17 +199,29 @@ FRk.prototype.eatoctet = function(sym, sym_start, sym_end)
                 } else {
 
                 }
+                // name checksum starts with the body checksum
+                this.savedos.cs_name = sym; 
                 this.state = 2.52;
             }
             break;
         case 2.52:
             // Vector-06c/SAVEDOS postamble
             this.savedos.name[this.savedos.nameidx++] = sym; 
+            this.savedos.cs_name = (sym + this.savedos.cs_name) & 0xff;
             this.confidence += 10 * (sym >= 0x20 && sym < 0x80);
             if (this.savedos.nameidx === 11) {
                 this.errormsg = "Filename: [" + String.fromCharCode.apply(null, this.savedos.name) + "]";
-                this.state = 100500;
+                this.state = 2.54;
             }
+            break;
+        case 2.54:
+            if (this.savedos.cs_name === sym) {
+                this.confidence += 100;
+            } else {
+                this.errormsg = "Name checksum mismatch: exp " + Util.hex8(this.savedos.cs_name) + 
+                    " read " + Util.hex8(sym);
+            }
+            this.state = 100500;
             break;
         case 2.75:
             this.x.cs_end = sym_end;
@@ -279,7 +291,7 @@ FRk.prototype.dump = function(wav, cas)
     return (function(that) {
         var append = that.savedos ? "  Имя: [" + 
             String.fromCharCode.apply(null, that.savedos.name) + "]" : "";
-        //return Util.dump(that.rawdump.slice(0,that.rawidx-1), that.FormatName + ": " + 
+        //return Util.dump(that.rawdump.slice(0,that.rawidx), that.FormatName + ": " + 
         return Util.dump(that.mem, that.FormatName + ": " + 
                 Math.round(that.confidence/that.maxconfidence*100) + "%" + append,
                 false,
@@ -312,5 +324,5 @@ function NewFSpec() {
 }
 
 function NewFVectorDOS() {
-    return new FRk(new RkBuf("ВекторДОС"), "Вектор-06ц SAVEDOS", 212, 1);
+    return new FRk(new RkBuf("ВекторДОС"), "Вектор-06ц SAVEDOS", 312, 1);
 }
