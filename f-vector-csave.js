@@ -156,7 +156,7 @@ FVectorCsave.prototype.eatoctet = function(sym, sym_start, sym_end)
                 ++this.dummycount; 
                 if (this.dummycount === 3) {
 
-                    this.count -= 3; // exclude trailing zeroes from the payload
+                    //this.count -= 3; // exclude trailing zeroes from the payload
                     this.mem.splice(this.count, 3);
 
                     this.Blocknik.sblk_sym_end = sym_end;
@@ -218,7 +218,8 @@ FVectorCsave.prototype.dump = function(wav, cas)
                 /* info_cb(addr) */
                 null,
                 /* navigate to */
-                null);
+                null,
+                that.FileName);
     })(this);
 }
 

@@ -237,6 +237,7 @@ FRk.prototype.eatoctet = function(sym, sym_start, sym_end)
             this.csm_lobuf = sym;
             if (this.rk.Check(this.csm_hibuf, this.csm_lobuf)) {
                 this.confidence += 400;
+                this.paint_rk(sym_start, sym_end);
                 this.state = 100500;
             } else {
                 this.state = 3;
@@ -291,7 +292,8 @@ FRk.prototype.dump = function(wav, cas)
                 /* info_cb(addr) */
                 null,
                 /* navigate to */
-                null);
+                null,
+                that.savedos ? Util.fcb_to_83(that.savedos.name) : false);
     })(this);
 }
 

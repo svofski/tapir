@@ -336,7 +336,8 @@ FVector.prototype.dump = function(wav, cas)
                     var out = b.sblk_sym_end;
                     wav.setNeedle(cas.IntervalToSample(iin));
                 }
-            }
+            },
+            that.NameBlock.NameStr()
             );
     })(this);
 };

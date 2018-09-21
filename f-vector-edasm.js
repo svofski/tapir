@@ -201,7 +201,8 @@ FVectorEDASM.prototype.dump = function(wav, cas)
                 /* info_cb(addr) */
                 null,
                 /* navigate to */
-                null);
+                null,
+                that.FileName);
     })(this);
 }
 

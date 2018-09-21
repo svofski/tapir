@@ -97,7 +97,9 @@ Util.infoclick_wrapper = function(cb)
     };
 }
 
-Util.dump = function(mem, title, pretitle, is_valid, info_cb, infoclick_cb) {
+Util.dump = function(mem, title, pretitle, is_valid, info_cb, infoclick_cb,
+    filename)
+{
     var org = 0;
 
     if (org % 16 !== 0) org = org - org % 16;
@@ -113,6 +115,17 @@ Util.dump = function(mem, title, pretitle, is_valid, info_cb, infoclick_cb) {
         var tit = document.createElement("pre");
         tit.innerHTML = title || "Raw tape dump:";
         result.push(tit);
+
+        var dlbutton = document.createElement("span");
+        dlbutton.innerHTML = "⬇";
+        dlbutton.id = "dlbutton";
+        dlbutton.classList.add("dlbutton");
+        (function(filename, content) {
+            dlbutton.addEventListener('click', function(e) {
+                Util.download(filename, content);
+            });
+        })(filename||"tape.bin", mem);
+        tit.appendChild(dlbutton);
     }
     {
         var hdiv = document.createElement("div");
@@ -194,3 +207,55 @@ Util.deleteChildren = function(id)
         parent.removeChild(parent.children[0]);
     }
 };
+
+Util.download = function(filename, data, type) 
+{
+    if (filename) {
+        var trim = 0;
+        for (var i = filename.length - 1; i >= 0; --i) {
+            if (filename.charCodeAt(i) <= 0x20) {
+                trim += 1;
+            } else {
+                break;
+            }
+        }
+        filename = filename.substring(0, filename.length - trim);
+    }
+    var a = document.createElement("a");
+    var bytes = new Uint8Array(data);
+    var file = new Blob([bytes], {type: type || "application/octet-stream"});
+    if (window.navigator.msSaveOrOpenBlob) // IE10+
+        window.navigator.msSaveOrOpenBlob(file, filename);
+    else { // Others
+        var url = URL.createObjectURL(file);
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function() {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 0);
+    }
+}
+
+Util.fcb_to_83 = function(fcb) 
+{
+    var filename = "";
+    var ext = "";
+    for (var i = 0; i < 8; ++i) {
+        if (fcb[i] > 0x20) {
+            filename += String.fromCharCode(fcb[i]);
+        } 
+        else break;
+    }
+
+    for (var i = 8; i < 11; ++i) {
+        if (fcb[i] > 0x20) {
+            ext += String.fromCharCode(fcb[i]);
+        } 
+        else break;
+    }
+
+    return ext.length > 0 ? filename + "." + ext : filename;
+}
