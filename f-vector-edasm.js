@@ -141,10 +141,15 @@ FVectorEDASM.prototype.eatoctet = function(sym, sym_start, sym_end)
                 this.bm.Region(1, this.bytemarks[0][0], this.bytemarks[1][1],
                     "section-byte-alt").text = "LENGTH:" + 
                     Util.hex16(this.length);
+                this.payload_start = sym_end;
             }
             break;
         case 7:  /* payload */
             if (sym === 0xff || this.count === this.length) {
+
+                this.bm.Region(1, this.payload_start, sym_end, "payload")
+                    .text = "DATA";
+
                 this.state = 8; 
                 this.bytemarks = [];
                 this.dummycount = 0;

@@ -126,6 +126,7 @@ FRk.prototype.Confidence = function()
     return this.confidence;
 }
 
+
 FRk.prototype.eatoctet = function(sym, sym_start, sym_end)
 {
     var resync = false;
@@ -196,31 +197,39 @@ FRk.prototype.eatoctet = function(sym, sym_start, sym_end)
             if (this.savedos) {
                 if (this.rk.Check(sym,-1)) {
                     this.confidence += 100;
-                } else {
-
-                }
+                } 
+                this.x.cs_end = sym_end;
+                this.x.name_start = sym_end;
+                this.x.savedos_name = [sym_end];
                 // name checksum starts with the body checksum
                 this.savedos.cs_name = sym; 
+                this.savedos.buf_cs = sym;
                 this.state = 2.52;
             }
             break;
         case 2.52:
             // Vector-06c/SAVEDOS postamble
+            this.x.savedos_name.push(sym_end);
             this.savedos.name[this.savedos.nameidx++] = sym; 
             this.savedos.cs_name = (sym + this.savedos.cs_name) & 0xff;
             this.confidence += 10 * (sym >= 0x20 && sym < 0x80);
             if (this.savedos.nameidx === 11) {
+                this.x.name_end = sym_end;
                 this.errormsg = "Filename: [" + String.fromCharCode.apply(null, this.savedos.name) + "]";
                 this.state = 2.54;
             }
             break;
         case 2.54:
+            this.savedos.buf_cs_name = sym;
             if (this.savedos.cs_name === sym) {
                 this.confidence += 100;
             } else {
                 this.errormsg = "Name checksum mismatch: exp " + Util.hex8(this.savedos.cs_name) + 
                     " read " + Util.hex8(sym);
             }
+            this.x.name_cs_start = sym_start;
+            this.x.name_cs_end = sym_end;
+            this.paint_savedos(sym_start, sym_end);
             this.state = 100500;
             break;
         case 2.75:
@@ -259,25 +268,7 @@ FRk.prototype.eatoctet = function(sym, sym_start, sym_end)
                 this.state = 100;
             }
 
-            this.bm.Region(0, this.x.o1, sym_end, "block");
-            this.bm.Region(0, this.x.o1, this.x.o5, "name");
-            this.bm.Region(0, this.x.o1, this.x.o2, "section-byte-alt")
-                .text = Util.hex8(this.buf[0]);
-            this.bm.Region(0, this.x.o2, this.x.o3, "section-byte-alt")
-                .text = Util.hex8(this.buf[1]);
-            this.bm.Region(0, this.x.o3, this.x.o4, "section-byte-alt")
-                .text = Util.hex8(this.buf[2]);
-            this.bm.Region(0, this.x.o4, this.x.o5, "section-byte-alt")
-                .text = Util.hex8(this.buf[3]);
-            this.bm.Region(0, this.x.o5, this.x.sync2_start, "payload")
-                .text = "DATA @" + Util.hex16(this.rk.start) + 
-                " [" + this.rk.buf.length + "]";
-            this.bm.Region(0, this.x.sync2_start, this.x.sync2_end, "sync")
-                .text = "SYNC";
-            this.bm.Region(0, this.x.cs_start, sym_start, "section-cs0")
-                .text = "=" + Util.hex8(this.cs_hibuf);
-            this.bm.Region(0, sym_start, sym_end, "section-cs1")
-                .text = Util.hex8(this.cs_lobuf) + "=";
+            this.paint_rk(sym_start, sym_end);
             break;
         case 100:
             break;
@@ -303,6 +294,60 @@ FRk.prototype.dump = function(wav, cas)
                 null);
     })(this);
 }
+
+FRk.prototype.paint_rk = function(sym_start, sym_end)
+{
+    this.bm.Region(0, this.x.o1, sym_end, "block");
+    this.bm.Region(0, this.x.o1, this.x.o5, "name");
+    this.bm.Region(0, this.x.o1, this.x.o2, "section-byte-alt")
+        .text = Util.hex8(this.buf[0]);
+    this.bm.Region(0, this.x.o2, this.x.o3, "section-byte-alt")
+        .text = Util.hex8(this.buf[1]);
+    this.bm.Region(0, this.x.o3, this.x.o4, "section-byte-alt")
+        .text = Util.hex8(this.buf[2]);
+    this.bm.Region(0, this.x.o4, this.x.o5, "section-byte-alt")
+        .text = Util.hex8(this.buf[3]);
+    this.bm.Region(0, this.x.o5, this.x.sync2_start, "payload")
+        .text = "DATA @" + Util.hex16(this.rk.start) + 
+        " [" + this.rk.buf.length + "]";
+    this.bm.Region(0, this.x.sync2_start, this.x.sync2_end, "sync")
+        .text = "SYNC";
+    this.bm.Region(0, this.x.cs_start, sym_start, "section-cs0")
+        .text = "=" + Util.hex8(this.cs_hibuf);
+    this.bm.Region(0, sym_start, sym_end, "section-cs1")
+        .text = Util.hex8(this.cs_lobuf) + "=";
+}
+
+FRk.prototype.paint_savedos = function(sym_start, sym_end)
+{
+    this.bm.Region(0, this.x.o1, sym_end, "block");
+    //this.bm.Region(0, this.x.o1, this.x.o5, "name");
+
+    this.bm.Region(0, this.x.o1, this.x.o3, "section-byte-alt")
+        .text = "START:" + Util.hex16(this.buf[0]<<8 | this.buf[1]);
+    this.bm.Region(0, this.x.o3, this.x.o5, "section-byte-alt")
+        .text = "END:" + Util.hex16(this.buf[2]<<8 | this.buf[3]);
+
+    this.bm.Region(0, this.x.o5, this.x.cs_start, "payload")
+        .text = "DATA @" + Util.hex16(this.rk.start) + 
+        " [" + this.rk.buf.length + "]";
+ 
+    this.bm.Region(0, this.x.cs_start, this.x.cs_end, "section-cs0")
+        .text = "=" + Util.hex8(this.savedos.buf_cs);
+
+   this.bm.Region(0, this.x.name_start, this.x.name_cs_end, "name").text = 
+        String.fromCharCode.apply(null, this.savedos.name);
+
+    for (var i = 0; i < this.x.savedos_name.length - 1; ++i) {
+        this.bm.Region(0, this.x.savedos_name[i], this.x.savedos_name[i+1],
+            "section-byte-alt").text = String.fromCharCode(this.savedos.name[i]);
+    }
+ 
+
+    this.bm.Region(0, this.x.name_cs_start, this.x.name_cs_end, "section-cs1")
+        .text = "=" + Util.hex8(this.savedos.buf_cs_name);
+}
+
 
 FRk.prototype.GetDecor = function(cas)
 {
