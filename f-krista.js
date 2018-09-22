@@ -71,6 +71,9 @@ FKrista.prototype.eatoctet = function(sym, sym_start, sym_end)
                 resync = true;
                 this.state = 5; /* local resync to e6 */
                 this.bm.Init(null, this.startaddr, this.endaddr - this.startaddr);
+                this.errormsg = "Blockmap init: start=" + 
+                    Util.hex16(this.startaddr) + " end=" + 
+                    Util.hex16(this.endaddr);
                 this.x.header_end = sym_end;
 
                 var bnum = this.startaddr;
@@ -169,6 +172,7 @@ FKrista.prototype.eatoctet = function(sym, sym_start, sym_end)
                 if (yet) {
                     resync = true;
                     this.state = 5;
+                    this.errormsg = "Remaining: " + yet;
                 } else {
                     /* Otherwise be happy and just ignore everything forevah */
                     this.state = 100500;
@@ -252,7 +256,11 @@ FKrista.prototype.dump = function(wav, cas)
                     var out = b.sblk_sym_end;
                     wav.setNeedle(cas.IntervalToSample(iin));
                 }
-            });
+            },
+            "krista-unknown.rom",
+            that.startaddr * 256,
+            that.endaddr * 256 - 1
+            );
     })(this);
 };
 
