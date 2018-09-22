@@ -107,6 +107,9 @@ Scanner.prototype.scan = function()
                 //if (!insync) {
                 //    //console.log("RESYNC by " + this.formats[f].FormatName);
                 //}
+                if (!insync) {
+                    syncbyte = 0;
+                }
             }
 
             bitcount = 0;

@@ -14,6 +14,11 @@ Cas.prototype.SetSkew = function(s)
     this.skew = s;
 }
 
+Cas.prototype.SetHyst = function(h)
+{
+    this.hyst = h;
+}
+
 Cas.prototype.ScanBPSK = function(finished_cb)
 {
     this.scanIntervals();
@@ -42,7 +47,8 @@ Cas.prototype.CreateHistogramDescription = function()
 
 Cas.prototype.scanIntervals = function()
 {
-    const hist = 3192; //4096;
+    //const hist = 3192; //4096;
+    const hist = this.hyst;
 
     this.wavwerk.rewind();
 
@@ -86,7 +92,6 @@ Cas.prototype.scanIntervals = function()
     intervals.push([100, previous_playhead]);
 
     this.intervals = intervals;
-    //console.log(intervals);
     this.histogram = histogram;
 }
 

@@ -222,7 +222,8 @@ Util.download = function(filename, data, type, startaddr, endaddr)
         filename = filename.substring(0, filename.length - trim);
     }
     var a = document.createElement("a");
-    var bytes = new Uint8Array(data.slice(startaddr || 0));
+    var bytes = new Uint8Array(data.slice(startaddr || 0,
+        endaddr ? endaddr + 1 : undefined));
     var file = new Blob([bytes], {type: type || "application/octet-stream"});
     if (window.navigator.msSaveOrOpenBlob) // IE10+
         window.navigator.msSaveOrOpenBlob(file, filename);

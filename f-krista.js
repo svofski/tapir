@@ -19,12 +19,16 @@ FKrista.prototype.reset = function()
     this.mem = [];
     this.bm = new Blockmap();
     this.x = {}; /* temporary stash for symbol positions */
+    this.globcount = 0;
 }
 
 FKrista.prototype.eatoctet = function(sym, sym_start, sym_end)
 {
     var resync = false;
     this.errormsg = "";
+    //if (this.globcount++ < 1024) {
+    //    console.log("sym: ", Util.hex8(sym), " state: ", this.state);
+    //}
     switch (this.state) {
         case 0:
             /* Nothing yet, waiting for the first sync/header */
@@ -129,8 +133,8 @@ FKrista.prototype.eatoctet = function(sym, sym_start, sym_end)
                 this.x.count_start = sym_start;
                 this.x.count_end = sym_end;
                 this.x.payload_start = -1;
-                //console.log("Loading KRISTA-2 Block to: " + Util.hex8(this.H) +
-                //        Util.hex8(this.L) + " Count=" + this.Count);
+                //this.errormsg = "Loading KRISTA-2 Block to: "+Util.hex8(this.H)+
+                //    Util.hex8(this.L) + " Count="+this.Count;
             }
             break;
         case 7:
@@ -153,6 +157,8 @@ FKrista.prototype.eatoctet = function(sym, sym_start, sym_end)
             this.x.cs_end = sym_end;
             this.x.block_end = sym_end;
 
+            //console.log("cs1 = " + Util.hex8(sym), " calculated=", 
+            //    Util.hex16(this.checksum));
             if (this.checksum !== sym) {
                 this.errormsg = "Payload checksum error in block: " +
                     Util.hex8(this.H) + Util.hex8(this.L) + "[" + this.CountFixed +
@@ -170,9 +176,10 @@ FKrista.prototype.eatoctet = function(sym, sym_start, sym_end)
                 var yet = this.bm.CountMissing();
                 /* If more blocks left to load, resync and load next */
                 if (yet) {
-                    resync = true;
-                    this.state = 5;
-                    this.errormsg = "Remaining: " + yet;
+                    //there's a mystery byte yet!
+                    //resync = true;
+                    //this.state = 5;
+                    this.state = 8.5;
                 } else {
                     /* Otherwise be happy and just ignore everything forevah */
                     this.state = 100500;
@@ -182,7 +189,6 @@ FKrista.prototype.eatoctet = function(sym, sym_start, sym_end)
             this.bm.Region(this.H, this.x.sync_start, this.x.sync_end, "sync")
                 .text = "SYNC";
             this.bm.Region(this.H, this.x.block_start, this.x.block_end, "block");
-            //this.bm.Region(this.H, this.x.header_start, this.x.header_end, "name");
             this.bm.Region(this.H, this.x.h_start, this.x.h_end, "section-byte-alt")
                 .text = Util.hex8(this.H);
             this.bm.Region(this.H, this.x.l_start, this.x.l_end, "section-byte-alt")
@@ -195,8 +201,15 @@ FKrista.prototype.eatoctet = function(sym, sym_start, sym_end)
                     " [" + this.CountFixed.toString(16) + "]";
             this.bm.Region(this.H, this.x.cs_start, this.x.cs_end, "section-cs0")
                 .text = "=" + Util.hex8(sym);
-
             break;
+
+        case 8.5:
+            //No idea what this octet might mean
+            //console.log("mystery sym: " + Util.hex8(sym));
+            resync = true;
+            this.state = 5;
+            break;
+
         case 100500:
             break;
     }
@@ -214,8 +227,9 @@ FKrista.prototype.dump = function(wav, cas)
             " Confidence: " + this.confidence +
             "</pre><br/>";
 
-    var i1 = "<pre class='d1'>Load addresses: " + Util.hex16(this.startaddr) + 
-        " through " + Util.hex16(this.endaddr) + "</pre><br/>";
+    var i1 = "<pre class='d1'>Load addresses: " + 
+        Util.hex16(this.startaddr*256) + 
+        " through " + Util.hex16(this.endaddr*256-1) + "</pre><br/>";
 
     var i2 = "";
     this.bm.ForEach(function(loaded, cs1, cs2, marks) {

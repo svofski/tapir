@@ -562,6 +562,11 @@
                 <input id="skew0" type="radio" name="dil" checked="checked"/>Поровну<br/>
                 <input id="skew2" type="radio" name="dil"/>Предпочитать короткий интервал<br/>
             </fieldset>
+            <fieldset class="inline-ffs">
+                <legend>Гистерезис</legend>
+                <input id="hyst100" type="radio" name="hyst" checked="checked"/>Мал<br/>
+                <input id="hyst3192" type="radio" name="hyst"/>Велик<br/>
+            </fieldset>
         </div>
         <div id="histogram-etc"> 
         </div>
@@ -594,10 +599,14 @@
         var lastinput = null;
         var defaultfilter = null;
         var defaultskew = 1;
+        var defaulthyst = 100;
         var view = null;
-        var fileSelectHandler = function(e, oldinput, filter, skew, oldview) {
+        var fileSelectHandler = 
+            function(e, oldinput, filter, skew, oldview, hyst) 
+            {
             defaultfilter = filter || defaultfilter;
             defaultskew = skew || defaultskew;
+            defaulthyst = hyst || defaulthyst;
             if (!e && !oldinput) {
                 return;
             }
@@ -625,6 +634,7 @@
                         var wavwerk = new Wavwerk(wav);
                         var bpskanalyser = new Cas(wavwerk);
                         bpskanalyser.SetSkew(defaultskew);
+                        bpskanalyser.SetHyst(defaulthyst);
 
                         var formats = [new FRaw(), new FKrista(), new FVector(),
                             NewFRk86(), NewFMicrosha(), NewFSpec(), NewFVectorDOS(),
@@ -715,6 +725,16 @@
         document.getElementById("skew0").addEventListener("change", skewchange, false);
         document.getElementById("skew2").addEventListener("change", skewchange, false);
  
+        ["hyst100","hyst3192"].forEach(
+            function(id) {
+                document.getElementById(id).addEventListener("change",
+                    function(e) {
+                        var value = parseInt(e.target.id.substring(4));
+                        fileSelectHandler(null,lastinput,null,1,view,value);
+                    },
+                    false);
+            });
+
 
     </script>
 </body>
