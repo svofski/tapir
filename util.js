@@ -98,7 +98,7 @@ Util.infoclick_wrapper = function(cb)
 }
 
 Util.dump = function(mem, title, pretitle, is_valid, info_cb, infoclick_cb,
-    filename)
+    filename, startaddr, endaddr)
 {
     var org = 0;
 
@@ -120,11 +120,11 @@ Util.dump = function(mem, title, pretitle, is_valid, info_cb, infoclick_cb,
         dlbutton.innerHTML = "⬇";
         dlbutton.id = "dlbutton";
         dlbutton.classList.add("dlbutton");
-        (function(filename, content) {
+        (function(filename, content, startaddr, endaddr) {
             dlbutton.addEventListener('click', function(e) {
-                Util.download(filename, content);
+                Util.download(filename, content, false, startaddr, endaddr);
             });
-        })(filename||"tape.bin", mem);
+        })(filename||"tape.bin", mem, startaddr, endaddr);
         tit.appendChild(dlbutton);
     }
     {
@@ -208,7 +208,7 @@ Util.deleteChildren = function(id)
     }
 };
 
-Util.download = function(filename, data, type) 
+Util.download = function(filename, data, type, startaddr, endaddr) 
 {
     if (filename) {
         var trim = 0;
@@ -222,7 +222,7 @@ Util.download = function(filename, data, type)
         filename = filename.substring(0, filename.length - trim);
     }
     var a = document.createElement("a");
-    var bytes = new Uint8Array(data);
+    var bytes = new Uint8Array(data.slice(startaddr || 0));
     var file = new Blob([bytes], {type: type || "application/octet-stream"});
     if (window.navigator.msSaveOrOpenBlob) // IE10+
         window.navigator.msSaveOrOpenBlob(file, filename);

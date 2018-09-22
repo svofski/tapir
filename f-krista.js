@@ -244,7 +244,7 @@ FKrista.prototype.dump = function(wav, cas)
             /* navigate to */
             function(e) {
                 var blknum = parseInt(e.target.getAttribute("blk"));
-                console.log("blknum=", blknum);
+                //console.log("blknum=", blknum);
                 var list = that.bm.GetRegions(blknum, "payload");
                 var b = list[0];
                 if (b) {

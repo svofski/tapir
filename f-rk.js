@@ -293,7 +293,8 @@ FRk.prototype.dump = function(wav, cas)
                 null,
                 /* navigate to */
                 null,
-                that.savedos ? Util.fcb_to_83(that.savedos.name) : false);
+                that.savedos ? Util.fcb_to_83(that.savedos.name) : false,
+                that.rk.start, that.rk.end);
     })(this);
 }
 
