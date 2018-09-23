@@ -122,7 +122,7 @@ FKrista.prototype.eatoctet = function(sym, sym_start, sym_end)
                 this.x.l_start = sym_start;
                 this.x.l_end = sym_end;
             } else {
-                this.Addr = (this.H << 8) || this.L;
+                this.Addr = (this.H << 8) | this.L;
                 this.Count = (0xff & (sym - 1)) + 1;
                 this.CountSym = sym;
                 this.CountFixed = this.Count;
@@ -133,8 +133,10 @@ FKrista.prototype.eatoctet = function(sym, sym_start, sym_end)
                 this.x.count_start = sym_start;
                 this.x.count_end = sym_end;
                 this.x.payload_start = -1;
+                //if (this.Count === 16) {
                 //this.errormsg = "Loading KRISTA-2 Block to: "+Util.hex8(this.H)+
                 //    Util.hex8(this.L) + " Count="+this.Count;
+                //}
             }
             break;
         case 7:
@@ -273,7 +275,8 @@ FKrista.prototype.dump = function(wav, cas)
             },
             "krista-unknown.rom",
             that.startaddr * 256,
-            that.endaddr * 256 - 1
+            that.endaddr * 256 - 1,
+            true
             );
     })(this);
 };

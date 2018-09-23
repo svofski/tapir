@@ -98,7 +98,7 @@ Util.infoclick_wrapper = function(cb)
 }
 
 Util.dump = function(mem, title, pretitle, is_valid, info_cb, infoclick_cb,
-    filename, startaddr, endaddr)
+    filename, startaddr, endaddr, krista)
 {
     var org = 0;
 
@@ -109,6 +109,11 @@ Util.dump = function(mem, title, pretitle, is_valid, info_cb, infoclick_cb,
         var pretit = document.createElement("pre");
         pretit.innerHTML = pretitle;
         result.push(pretit);
+    }
+
+    if (krista) {
+        var kristakanvas = Util.krista_titlecanvas(mem);
+        result.push(kristakanvas);
     }
     
     {
@@ -260,3 +265,50 @@ Util.fcb_to_83 = function(fcb)
 
     return ext.length > 0 ? filename + "." + ext : filename;
 }
+
+Util.krista_titlecanvas = function(mem)
+{
+    var c = document.createElement("canvas");
+    c.width = 256;
+    c.height = 256;
+    c.setAttribute("class", "kristakanvas");
+    var ctx = c.getContext("2d");
+    ctx.translate(0.5, 0.5);
+
+    var dat = ctx.getImageData(0, 0, 256, 256);
+    var bmp = new Uint32Array(dat.data.buffer);
+
+    var bofs = 0;
+    for (var ofs = 0; ofs < 256*256/8; ++ofs) {
+        var Y = mem[0x8000 + ofs] || 0;
+        var r = mem[0xa000 + ofs] || 0;
+        var g = mem[0xc000 + ofs] || 0;
+        var b = mem[0xe000 + ofs] || 0;
+
+        var x = Math.floor(ofs / 256);
+        var y = 255 - (ofs % 256);
+
+        var bo = x * 8 + y * 256;
+
+        var pset = function(y,r,g,b,mask,bo) {
+            bmp[bo]  = 0xff000000;
+            bmp[bo] |= (r & mask) ? 0x00800000 : 0;
+            bmp[bo] |= (g & mask) ? 0x00008000 : 0;
+            bmp[bo] |= (b & mask) ? 0x00000080 : 0;
+            bmp[bo] += (y & mask) ? 0x007f7f7f : 0;
+        };
+        pset(Y,r,g,b,0x80,bo+0);
+        pset(Y,r,g,b,0x40,bo+1);
+        pset(Y,r,g,b,0x20,bo+2);
+        pset(Y,r,g,b,0x10,bo+3);
+        pset(Y,r,g,b,0x08,bo+4);
+        pset(Y,r,g,b,0x04,bo+5);
+        pset(Y,r,g,b,0x02,bo+6);
+        pset(Y,r,g,b,0x01,bo+7);
+    }
+    
+    ctx.putImageData(dat, 0, 0);
+    return c;
+}
+
+
