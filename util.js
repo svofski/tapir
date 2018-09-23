@@ -268,6 +268,25 @@ Util.fcb_to_83 = function(fcb)
 
 Util.krista_titlecanvas = function(mem)
 {
+    // yrgb -> abgr
+    var palette = [
+        /* 0000 */  0xff000000,
+        /* 0001 */  0xffaa0000,
+        /* 0010 */  0xff00aa00,
+        /* 0011 */  0xffff5500,
+        /* 0100 */  0xff0000ff,
+        /* 0101 */  0xff5500ff,
+        /* 0110 */  0xff0055ff,
+        /* 0111 */  0xff00ffff,
+        /* 1000 */  0xff000000,
+        /* 1001 */  0xffff00aa,
+        /* 1010 */  0xff00ff55,
+        /* 1011 */  0xffff0000,
+        /* 1100 */  0xff0000aa,
+        /* 1101 */  0xffaaaa00,
+        /* 1110 */  0xffaaaaaa,
+        /* 1111 */  0xffffffff,
+    ];
     var c = document.createElement("canvas");
     c.width = 256;
     c.height = 256;
@@ -290,21 +309,22 @@ Util.krista_titlecanvas = function(mem)
 
         var bo = x * 8 + y * 256;
 
-        var pset = function(y,r,g,b,mask,bo) {
-            bmp[bo]  = 0xff000000;
-            bmp[bo] |= (r & mask) ? 0x00800000 : 0;
-            bmp[bo] |= (g & mask) ? 0x00008000 : 0;
-            bmp[bo] |= (b & mask) ? 0x00000080 : 0;
-            bmp[bo] += (y & mask) ? 0x007f7f7f : 0;
+        var col = function(y,r,g,b,bit) {
+            var mask = 0x80 >> bit;
+            var idx = (((y & mask) >> (7-bit)) << 3) | 
+                (((r & mask) >> (7-bit)) << 2) | 
+                (((g & mask) >> (7-bit)) << 1) |
+                (((b & mask) >> (7-bit)) << 0);
+            return palette[idx];
         };
-        pset(Y,r,g,b,0x80,bo+0);
-        pset(Y,r,g,b,0x40,bo+1);
-        pset(Y,r,g,b,0x20,bo+2);
-        pset(Y,r,g,b,0x10,bo+3);
-        pset(Y,r,g,b,0x08,bo+4);
-        pset(Y,r,g,b,0x04,bo+5);
-        pset(Y,r,g,b,0x02,bo+6);
-        pset(Y,r,g,b,0x01,bo+7);
+        bmp[bo+0] = col(Y,r,g,b,0);
+        bmp[bo+1] = col(Y,r,g,b,1);
+        bmp[bo+2] = col(Y,r,g,b,2);
+        bmp[bo+3] = col(Y,r,g,b,3);
+        bmp[bo+4] = col(Y,r,g,b,4);
+        bmp[bo+5] = col(Y,r,g,b,5);
+        bmp[bo+6] = col(Y,r,g,b,6);
+        bmp[bo+7] = col(Y,r,g,b,7);
     }
     
     ctx.putImageData(dat, 0, 0);
