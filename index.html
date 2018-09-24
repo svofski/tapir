@@ -578,6 +578,7 @@
             <summary>Журнал сообщений</summary>
             <div id="log-etc"></div>
         </details>
+        <div id="result-sel"></div>
         <div id="dump-etc"> </div>
     </div>
     <script language="JavaScript" src="./util.js" type="text/javascript"><!--x--></script>
@@ -641,26 +642,52 @@
                         bpskanalyser.SetHyst(defaulthyst);
 
                         var formats = [new FRaw(), new FKrista(), new FVector(),
-                            NewFRk86(), NewFMicrosha(), NewFSpec(), NewFVectorDOS(),
+                            NewFRk86(), NewFMicrosha(), NewFSpec(), 
+                            NewFVectorDOS(),
                             new FVectorCsave(), new FVectorBsave(), 
                             new FVectorEDASM()];
 
                         var formats_done = formats.length;
-                        var most_confident = {confidence:0, fmt: formats[0]};
+                        var results = [];
+                        
+                        var display_result = function(n) {
+                            var tc = document.getElementById("dump-etc");
+                            tc.innerHTML = "";
+                            var dump = results[n].fmt.dump(view, bpskanalyser);
+                            tc.appendChild(dump);
+                            view.Decorate(results[n].fmt.GetDecor(bpskanalyser));
+                        };
 
-                        var displayresult = function(scanner) {
+                        var present_results = function() {
+                            results.sort(function(a,b) {
+                                return b.confidence - a.confidence;
+                            });
+                            var sel = document.createElement("select");
+                            var rc = document.getElementById("result-sel");
+                            rc.innerHTML = "";
+                            rc.appendChild(sel);
+
+                            for (var i = 0; i < results.length; ++i) {
+                                var o = document.createElement("option");
+                                o.innerText = results[i].fmt.FormatName;
+                                o.format_idx = i;
+                                sel.appendChild(o);
+                            }
+
+                            sel.addEventListener('change', function(e) {
+                                display_result(e.target.selectedIndex);
+                            });
+                            display_result(0);
+                        };
+
+                        var addresult = function(scanner) {
+                            results.push(
+                                {confidence: scanner.format.Confidence(),
+                                 fmt: scanner.format});
                             logcontainer = document.getElementById("log-etc");
                             logcontainer.appendChild(scanner.log);
-                            if (scanner.format.Confidence() > most_confident.confidence)
-                            {
-                                most_confident.confidence = scanner.format.Confidence();
-                                most_confident.fmt = scanner.format;
-                            }
                             if (--formats_done === 0) {
-                                textcontainer = document.getElementById("dump-etc");
-                                var dump = most_confident.fmt.dump(view, bpskanalyser);
-                                textcontainer.appendChild(dump);
-                                view.Decorate(most_confident.fmt.GetDecor(bpskanalyser));
+                                present_results();
                             }
                         };
 
@@ -675,7 +702,7 @@
 
                             for (var i in formats) {
                                 new Scanner(bpskanalyser, formats[i]).
-                                    Scan(displayresult);
+                                    Scan(addresult);
                             }
                         });
                     }

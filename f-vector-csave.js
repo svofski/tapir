@@ -13,6 +13,8 @@ FVectorCsave.prototype.reset = function()
 {
     this.confidence = 0;
     this.mem = [];
+    this.rawbuf = [];
+    this.rawidx = 0;
     this.count = 0;
     this.state = 0;
     this.bm = new Blockmap();
@@ -52,6 +54,7 @@ FVectorCsave.prototype.eatoctet = function(sym, sym_start, sym_end)
             }
             break;
         case 1: /* CAS/BAS header magic: D3 D3 D3 D3 */
+            this.rawbuf[this.rawidx++] = sym;
             if (sym === 0xd3) {
                 this.bytemarks[this.dummycount] = [sym_start, sym_end, sym];
                 ++this.dummycount;
@@ -61,6 +64,11 @@ FVectorCsave.prototype.eatoctet = function(sym, sym_start, sym_end)
                     this.state = 2;
                 }
             } else {
+                var act = "";
+                for (var i = 0; i < this.rawidx; ++i) {
+                    act += Util.hex8(this.rawbuf[i]) + " ";
+                }
+                this.errormsg = "В06Ц CAS искал D3 D3 D3 D3, а нашел " + act;
                 this.confidence = -1001;
             }
             break;
