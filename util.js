@@ -268,6 +268,10 @@ Util.fcb_to_83 = function(fcb)
 
 Util.krista_titlecanvas = function(mem)
 {
+    if (mem.slice(0x8000, 0x10000).length === 0) {
+        return document.createElement("span");
+    }
+
     // yrgb -> abgr
     var palette = [
         /* 0000 */  0xff000000,
