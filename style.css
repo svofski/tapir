@@ -1,0 +1,528 @@
+    body {
+        padding: 0;
+        margin: 0;
+        background-color: black;
+    }
+    
+    body.fullpage {
+        overflow: hidden;
+    }
+    
+    #canvasdiv {
+        margin: auto;
+        border: 10px solid #111;
+        position: relative;
+    }
+    
+    #canvasdiv.fullpage {
+        border: 0px;
+        margin: auto;
+    }
+
+    #canvasdiv.dragover {
+    }
+
+    #canvasdiv #dropzone {
+        display:none;
+        font-size: 75vh;
+        text-shadow: 0px 0px 14px rgba(255, 255, 255, 1);
+        background-color: transparent;
+        color: white;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        border: 0.5px dashed #fff;
+        margin: 2%;
+        border-radius: 10px;        
+        left: 0;
+        right: 0;
+        text-align: center;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    #canvasdiv #dropzone:before {
+        content: "";
+        opacity: 0.4;
+        background: black;
+        border-radius: 10px;        
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        left: 0;
+        z-index: -1;
+    }
+
+    #canvasdiv.dragover #dropzone {
+        display:block;
+    }
+    
+    #chooser-glass {
+        display: none;
+    }
+    
+    #chooser-panelcontainer {
+        margin: auto;
+        //width: 33em;
+        height: 60ex;
+        background-color: transparent;
+        color: #fff;
+        padding: 2em 8em 2em 8em;
+        font-family: sans-serif;
+        font-size: large;
+    }
+    
+    #chooser-backdrop {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        #background-color: black;
+        z-index: 1;
+        /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#000000+0,000000+52,7db9e8+100&0.9+0,0.8+52,0.01+100 */
+        background: -moz-linear-gradient(left, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.8) 52%, rgba(125, 185, 232, 0.01) 100%);
+        /* FF3.6-15 */
+        background: -webkit-linear-gradient(left, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.8) 52%, rgba(125, 185, 232, 0.01) 100%);
+        /* Chrome10-25,Safari5.1-6 */
+        background: linear-gradient(to right, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.8) 52%, rgba(125, 185, 232, 0.01) 100%);
+        /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+        filter: progid: DXImageTransform.Microsoft.gradient( startColorstr='#e6000000', endColorstr='#037db9e8', GradientType=1);
+        /* IE6-9 */
+    }
+    
+    #chooser-paper {
+        z-index: 2;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin: 0%;
+    }
+    
+    #chooser-panelcontainer.fullpage {
+        border: 0px;
+        margin: 5%;
+        padding: 5%;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: block;
+    }
+    
+    #chooserpanel {
+        margin: 1%;
+        overflow: auto;
+        font-family: monospace;
+        font-weight: bold;
+    }
+    
+    #chooserpanel a {
+        color: ivory;
+        text-decoration: none;
+        padding-left: 0.25em;
+        padding-right: 1em;
+    }
+    
+    #chooserpanel a:hover {
+        background-color: #ff0;
+        color: #000;
+    }
+    
+    #chooserpanel ul {
+        line-height: 3ex;
+        list-style: none;
+        margin-left: 0;
+        padding-left: 32px;
+        text-indent: -32px;
+    }
+    
+    #chooserpanel li:before {
+        padding-right: 32px;
+        padding-top: 7px;
+        padding-bottom: 4px;
+    }
+    
+    .chooser-li-rom:before {
+        content: " ";
+        background: url('cassette-32x32.png') transparent no-repeat;
+    }
+    
+    .chooser-li-fdd:before {
+        content: " ";
+        background: url('diskette-32x32.png') transparent no-repeat;
+    }
+    
+    .chooser-li-wtf:before {
+        content: " ";
+    }
+    
+    .chooserhdr {
+        font-size: x-large;
+        font-family: impact;
+        background-color: yellowgreen;
+        color: black;
+        padding-left: 10px;
+        /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#dbd406+0,dbd406+100&0.9+0,0.8+31,0.2+67,0.01+100 */
+        background: -moz-linear-gradient(left, rgba(219, 212, 6, 0.9) 0%, rgba(219, 212, 6, 0.8) 31%, rgba(219, 212, 6, 0.2) 67%, rgba(219, 212, 6, 0.01) 100%);
+        /* FF3.6-15 */
+        background: -webkit-linear-gradient(left, rgba(219, 212, 6, 0.9) 0%, rgba(219, 212, 6, 0.8) 31%, rgba(219, 212, 6, 0.2) 67%, rgba(219, 212, 6, 0.01) 100%);
+        /* Chrome10-25,Safari5.1-6 */
+        background: linear-gradient(to right, rgba(219, 212, 6, 0.9) 0%, rgba(219, 212, 6, 0.8) 31%, rgba(219, 212, 6, 0.2) 67%, rgba(219, 212, 6, 0.01) 100%);
+        /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+        filter: progid: DXImageTransform.Microsoft.gradient( startColorstr='#e6dbd406', endColorstr='#03dbd406', GradientType=1);
+        /* IE6-9 */
+    }
+    
+    #buildhdr {
+        color: white;
+        border-radius: 4px;
+    }
+    
+    #buildhdr:hover {
+        color: black;
+        background-color: yellow;
+    }
+    
+    #about-glass {
+        opacity: 0;
+        display: none;
+        transition: opacity 0.5s ease-in-out;
+    }
+    
+    #about-panel {
+        z-index: 4;
+        margin: 0;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        position: fixed;        
+        display: none;
+    }
+    
+    #about-panel.fullpage {
+        position: absolute;
+        width: initial;
+        height: initial;
+        padding: 0;
+        margin: 0;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+    }
+    
+    #about-panel.visible {
+        display: block;
+    }
+    
+    #about-panel a {
+        color: yellow;
+        text-decoration: underline;
+    }
+    
+    #about {
+        margin: auto;
+        width: 100%;
+        height: 100%;
+        background-color: black;
+        opacity: 0.9;
+        filter: alpha(opacity=0.9);
+        padding-top: 0ex;
+        text-align: center;
+    }
+
+    #about-panel #about {
+        width: 80%;
+    }
+
+    #about-panel.fullpage #about {
+        width: 100%;
+    }
+
+    #about-panel.fullpage #about .hdr1 {
+        font-size: 20pt;
+        padding-top: 0.5ex;
+        padding-bottom: 0.5ex;
+    }
+    
+    #about-help {
+        color: white;
+        text-align: left;
+        margin-left: 2%;
+        font-family: sans-serif;
+        font-size: smaller;
+    }
+    
+    .about-scroll {
+        overflow-y: scroll;
+        overflow-x: hidden;
+        height: 75vh;
+    }
+    
+    .hdr1 {
+        padding-top: 1ex;
+        padding-bottom: 1ex;
+        font-family: sans-serif;
+        font-weight: bold;
+        background-color: white;
+        font-size: 28pt;
+        color: black;
+    }
+    
+    .hdr2 {
+        margin-top: -1ex;
+        font-family: sans-serif;
+        font-size: small;
+        color: white;
+    }
+    
+    .acks {
+        margin-top: 2ex;
+        margin-left: 1em;
+        font-family: sans-serif;
+        font-size: small;
+        color: white;
+        text-align: left;
+    }
+    
+    .licence {
+        margin-left: 2%;
+        margin-top: 4ex;
+        text-align: left;
+        font-size: 60%;
+        font-family: monospace;
+        color: white;
+        line-height: 100%;
+    }
+    
+    .outer {
+        display: table;
+        position: absolute;
+        height: 100%;
+        width: 100%;
+    }
+    
+    .middle {
+        display: table-cell;
+        vertical-align: middle;
+    }
+    
+    .inner {
+        margin-left: auto;
+        margin-right: auto;
+        width: /*whatever width you want*/
+        ;
+    }
+    
+    .bottomzone {
+        margin-left: 8em;
+        margin-right: 8em;
+    }
+    
+    .topzone {
+        margin-left: 8em;
+        margin-right: 8em;
+        margin-top: 1ex;
+        margin-bottom: 1ex;
+        text-align: center;
+        font-family: sans-serif;
+        color: #fff;
+        opacity: 0.5;
+        transition: opacity 0.15s ease-in-out;
+    }
+    
+    .topzone:hover {
+        opacity: 1.0;
+        transition: opacity 0.25s ease-in-out;
+    }
+    
+    .fileUpload {
+        position: relative;
+        overflow: hidden;
+        font-weight: bold;
+        font-family: sans-serif;
+        text-align: center;
+        padding: 1em 0;
+        margin: 1em 1em;
+        color: #fff;
+        border: 0.5px dashed #fff;
+        border-radius: 7px;
+        cursor: default;
+        z-index: 3;
+    }
+    
+    .fileUpload:hover {
+        color: #fff;
+        border-color: #888;
+        border-style: solid;
+    }
+    
+    .fileUpload input.upload {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+        opacity: 0;
+        filter: alpha(opacity=0);
+    }
+
+    .there-be-dragons {
+        font-family: monospace;
+        color: #f77;
+        background-color: #113;
+        background-image: url("omg-cat.png");
+        background-size: contain;
+        background-repeat:   no-repeat;
+        background-position: right;
+        padding-top:1ex;
+        padding-bottom:1ex;
+        border-radius: 10px;        
+        padding-left: 1em;
+        opacity: 0;
+        filter: alpha(opacity=0);
+        transition: opacity 0.25s ease-in-out;
+    }
+    .there-be-dragons:hover {
+        opacity: 1;
+        filter: alpha(opacity=1);
+        transition: opacity 0.25s ease-in-out;
+    }
+
+    #slider-kotov {
+        display: inline-block;
+        transition: opacity 0.25s ease-in-out;
+    }
+    #slider-kotov:disabled {
+        opacity: 0.1;
+        transition: opacity 0.25s ease-in-out;
+    }
+
+    #wav-zoom {
+        //border: 2px solid magenta;
+        //display:none;
+    }
+    #wav-overview {
+        //border: 2px solid white;
+        position: absolute;
+        z-index: 1;
+    }
+    #wav-window {
+        position: absolute;
+        border: 2px solid #888;
+        border-radius: 4px;        
+        pointer-events: none;
+        z-index: 2;
+    }
+    #graphics-div {
+        width: 100%;
+        padding: 0px;
+        margin: 0px;
+    }
+    #text-div {
+        color: white;
+        background-color: #111;
+    }
+    #overview-container {
+        height: 80px;
+    }
+    #histogram-description-pre {
+        display: inline-block;
+    }
+    #histogram-etc {
+        display: inline-block;
+    }
+    #priparki {
+        display: inline-block;
+        border: 1px solid #222;
+        padding: 0.25em;
+        margin: 0.5em;
+    }
+    #priparki .subhdr {
+        margin-bottom: 1em;
+        font-family: monospace;
+    }
+    #priparki-histogramki {
+        margin-bottom: 1em;
+    }
+    .inline-ffs {
+        display: inline-block;
+        border-width: 0.5px;
+        font-family: monospace;
+    }
+    input {
+        font-family: monospace;
+    }
+    #dump-etc {
+        overflow-y: scroll;
+        max-height: 100vh;
+    }
+    span.errorline {
+        background: red;
+    }
+    .dump-container {
+        line-height: 16px;
+        display: inline-block;
+    }
+    .dt { padding-right:0.5em; display:inline;} 
+    .d0 { padding-right:0.5em; background-color: #111; display:block;
+        margin-top: 0px; margin-bottom: 0px;
+        height: 16px;
+        cursor: pointer;
+    }
+    .d1 { padding-right:0.5em; background-color: #222; display:block;
+        margin-top: 0px; margin-bottom: 0px;
+        height: 16px;
+        cursor: pointer;
+    }
+    .e0 { padding-right:0.5em; background-color: #700; display:block;
+        margin-top: 0px; margin-bottom: 0px;
+        height: 16px;
+        cursor: pointer;
+    }
+    .e1 { padding-right:0.5em; background-color: #800; display:block;
+        margin-top: 0px; margin-bottom: 0px;
+        height: 16px;
+        cursor: pointer;
+    }
+    .bi { color: yellow;
+          display: inline; 
+          margin-left: 1em;
+    }
+    .dc { 
+        width: 16px; 
+        height: 16px;
+        vertical-align: middle;
+        margin-left: 1em;
+        image-rendering: pixelated;
+    } 
+    .kristakanvas {
+        margin-left: 1em;
+        image-rendering: pixelated;
+    }
+
+    #messages {
+        border: 1px solid #222;
+        padding: 0.25em;
+        margin: 0.5em;
+        float: right;
+        width: 30em;
+        max-height: 100vh;
+        overflow-y: auto;
+    }
+
+    #dlbutton {
+        padding: 1em;
+        color: cyan;
+        text-decoration: underline;
+        cursor: pointer;
+    }
+    #dlbutton:hover {
+        color: white;
+    }
